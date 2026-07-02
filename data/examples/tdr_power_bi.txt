@@ -1,0 +1,18 @@
+OBJETO:
+Contratar licencias de Business Intelligence para construir tableros de control institucionales.
+
+ALCANCE:
+La institución requiere una herramienta que permita conectar fuentes de datos, construir dashboards, publicar reportes y compartir indicadores con usuarios autorizados. El proveedor deberá incluir configuración inicial y capacitación.
+
+REQUISITOS TÉCNICOS:
+Debe permitir creación de reportes y dashboards interactivos.
+Debe integrarse con archivos Excel y bases de datos.
+Debe permitir publicación web segura de reportes.
+Debe soportar actualización periódica de datos.
+Debe incluir capacitación para usuarios analistas.
+
+PRODUCTOS ESPERADOS:
+Licencias de BI activadas.
+Tablero de ejemplo publicado.
+Manual básico de uso.
+Sesión de capacitación.

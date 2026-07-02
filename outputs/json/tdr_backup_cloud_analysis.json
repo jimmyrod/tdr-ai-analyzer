@@ -1,0 +1,92 @@
+{
+  "nombre_documento": "tdr_backup_cloud.txt",
+  "resumen_general": "OBJETO: Contratar un servicio de backup cloud para respaldar información crítica de servidores institucionales. ALCANCE: El servicio debe realizar copias automáticas, conservar versiones históricas y permitir restauración de archivos ante fallas, eliminación accidental o incidentes de seguridad. El proveedor deberá implementar la solución y entregar reportes mensuales.",
+  "objeto_requerimiento": "",
+  "categoria_tecnologica": "Backup y recuperación",
+  "requisitos_tecnicos": [
+    {
+      "id": "REQ-001",
+      "descripcion": "OBJETO: Contratar un servicio de backup cloud para respaldar información crítica de servidores institucionales.",
+      "tipo": "tecnico",
+      "prioridad": "alta",
+      "fragmento_fuente": "OBJETO: Contratar un servicio de backup cloud para respaldar información crítica de servidores institucionales."
+    },
+    {
+      "id": "REQ-002",
+      "descripcion": "ALCANCE: El servicio debe realizar copias automáticas, conservar versiones históricas y permitir restauración de archivos ante fallas, eliminación accidental o incidentes de seguridad.",
+      "tipo": "no funcional",
+      "prioridad": "alta",
+      "fragmento_fuente": "ALCANCE: El servicio debe realizar copias automáticas, conservar versiones históricas y permitir restauración de archivos ante fallas, eliminación accidental o incidentes de seguridad."
+    },
+    {
+      "id": "REQ-003",
+      "descripcion": "El proveedor deberá implementar la solución y entregar reportes mensuales.",
+      "tipo": "tecnico",
+      "prioridad": "alta",
+      "fragmento_fuente": "El proveedor deberá implementar la solución y entregar reportes mensuales."
+    },
+    {
+      "id": "REQ-004",
+      "descripcion": "REQUISITOS TÉCNICOS: Debe realizar backup automático diario.",
+      "tipo": "tecnico",
+      "prioridad": "alta",
+      "fragmento_fuente": "REQUISITOS TÉCNICOS: Debe realizar backup automático diario."
+    },
+    {
+      "id": "REQ-005",
+      "descripcion": "Debe permitir recuperación granular de archivos.",
+      "tipo": "tecnico",
+      "prioridad": "alta",
+      "fragmento_fuente": "Debe permitir recuperación granular de archivos."
+    },
+    {
+      "id": "REQ-006",
+      "descripcion": "Debe incluir almacenamiento en nube cifrado.",
+      "tipo": "tecnico",
+      "prioridad": "alta",
+      "fragmento_fuente": "Debe incluir almacenamiento en nube cifrado."
+    },
+    {
+      "id": "REQ-007",
+      "descripcion": "Debe ofrecer retención mínima de 90 días.",
+      "tipo": "tecnico",
+      "prioridad": "alta",
+      "fragmento_fuente": "Debe ofrecer retención mínima de 90 días."
+    },
+    {
+      "id": "REQ-008",
+      "descripcion": "Debe contemplar soporte técnico y monitoreo.",
+      "tipo": "servicio",
+      "prioridad": "alta",
+      "fragmento_fuente": "Debe contemplar soporte técnico y monitoreo."
+    }
+  ],
+  "productos_o_servicios_esperados": [
+    "OBJETO: Contratar un servicio de backup cloud para respaldar información crítica de servidores institucionales.",
+    "ALCANCE: El servicio debe realizar copias automáticas, conservar versiones históricas y permitir restauración de archivos ante fallas, eliminación accidental o incidentes de seguri",
+    "Debe contemplar soporte técnico y monitoreo.",
+    "PRODUCTOS ESPERADOS: Servicio de respaldo activo."
+  ],
+  "solucion_recomendada": {
+    "nombre": "Backup cloud",
+    "categoria": "Backup y recuperación",
+    "justificacion": "La solucion 'Backup cloud' coincide con la categoria 'Backup y recuperación' y cubre terminos clave: almacenamiento, automaticas, backup, cloud, copias, debe, nube, para. La recomendacion se basa en los fragmentos recuperados del TDR y en la base de conocimiento. Evidencia documental: OBJETO:\nContratar un servicio de backup cloud para respaldar información crítica de servidores institucionales.\nALCANCE:\nEl servicio debe realizar copias automáticas, conservar ver",
+    "nivel_confianza": "alta"
+  },
+  "alternativas": [
+    "Microsoft 365 Business Basic",
+    "Google Workspace Business Standard",
+    "Sophos Intercept X Advanced for Server with XDR"
+  ],
+  "datos_faltantes_o_ambiguos": [
+    "No se especifica cantidad de usuarios/licencias.",
+    "No se especifica plazo de contratación o vigencia.",
+    "No se especifica presupuesto referencial."
+  ],
+  "observaciones": "Análisis generado en modo demo sin OPENAI_API_KEY. La recomendación es preliminar, no reemplaza la revisión de un especialista técnico y no constituye evaluación legal, contractual ni financiera. Confianza de clasificación: 0.50.",
+  "fragmentos_recuperados": [
+    "OBJETO:\nContratar un servicio de backup cloud para respaldar información crítica de servidores institucionales.\nALCANCE:\nEl servicio debe realizar copias automáticas, conservar versiones históricas y permitir restauración de archivos ante fallas, eliminación accidental o incidentes de seguridad. El proveedor deberá implementar la solución y entregar reportes mensuales.\nREQUISITOS TÉCNICOS:\nDebe realizar backup automático diario.\nDebe permitir recuperación granular de archivos.\nDebe incluir almacenamiento en nube cifrado.\nDebe ofrecer retención mínima de 90 días.\nDebe contemplar soporte técnico y monitoreo.\nPRODUCTOS ESPERADOS:\nServicio de respaldo activo.\nPlan de restauración.\nReporte mensua"
+  ],
+  "tiempo_analisis_segundos": 0.01,
+  "modo_demo": true
+}
