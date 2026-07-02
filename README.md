@@ -2,7 +2,7 @@
 
 Prototipo académico para analizar términos de referencia tecnológicos mediante procesamiento de lenguaje natural, recuperación aumentada con generación (RAG) y recomendación preliminar de soluciones tecnológicas.
 
-## Problema que resuelve
+## Problema que resuelve..
 
 El análisis de TDR tecnológicos suele hacerse manualmente sobre documentos PDF, Word o texto. Este prototipo permite cargar un documento, extraer requisitos técnicos, clasificar el requerimiento y recomendar una solución compatible desde una base de conocimiento editable.
 
