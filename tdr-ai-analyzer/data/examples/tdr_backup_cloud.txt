@@ -1,0 +1,18 @@
+OBJETO:
+Contratar un servicio de backup cloud para respaldar información crítica de servidores institucionales.
+
+ALCANCE:
+El servicio debe realizar copias automáticas, conservar versiones históricas y permitir restauración de archivos ante fallas, eliminación accidental o incidentes de seguridad. El proveedor deberá implementar la solución y entregar reportes mensuales.
+
+REQUISITOS TÉCNICOS:
+Debe realizar backup automático diario.
+Debe permitir recuperación granular de archivos.
+Debe incluir almacenamiento en nube cifrado.
+Debe ofrecer retención mínima de 90 días.
+Debe contemplar soporte técnico y monitoreo.
+
+PRODUCTOS ESPERADOS:
+Servicio de respaldo activo.
+Plan de restauración.
+Reporte mensual de copias ejecutadas.
+Prueba de recuperación documentada.

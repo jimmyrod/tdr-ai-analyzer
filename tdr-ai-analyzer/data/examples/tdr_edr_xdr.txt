@@ -1,0 +1,18 @@
+OBJETO:
+Adquirir una solución de seguridad endpoint con capacidades EDR/XDR para proteger estaciones de trabajo y servidores institucionales.
+
+ALCANCE:
+El proveedor deberá suministrar licenciamiento anual, consola centralizada, implementación, afinamiento de políticas y soporte técnico. La solución debe detectar malware, ransomware y comportamientos anómalos, además de permitir investigación y respuesta ante amenazas.
+
+REQUISITOS TÉCNICOS:
+Debe incluir protección antivirus y antiransomware para endpoints.
+Debe contar con capacidades EDR o XDR para análisis de amenazas.
+Debe permitir administración centralizada de estaciones de trabajo y servidores.
+Debe generar reportes de incidentes y alertas de seguridad.
+Debe incluir soporte técnico y transferencia de conocimiento.
+
+PRODUCTOS ESPERADOS:
+Licencias de seguridad endpoint.
+Consola de administración operativa.
+Informe de implementación.
+Documento de políticas configuradas.

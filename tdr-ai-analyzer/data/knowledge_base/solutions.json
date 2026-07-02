@@ -1,0 +1,421 @@
+[
+  {
+    "id": "solucion_001",
+    "nombre": "Microsoft 365 Business Basic",
+    "categoria": "Licenciamiento de software",
+    "descripcion": "Suite SaaS para correo empresarial, OneDrive, Teams web y aplicaciones web de Office.",
+    "caracteristicas_principales": [
+      "Correo empresarial Exchange",
+      "Microsoft Teams",
+      "OneDrive for Business",
+      "Aplicaciones web y móviles de Office"
+    ],
+    "requisitos_que_cubre": [
+      "correo corporativo",
+      "almacenamiento en nube",
+      "videoconferencia",
+      "colaboración"
+    ],
+    "restricciones": [
+      "No incluye aplicaciones de escritorio completas"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Adecuado cuando el TDR prioriza correo, nube y colaboración básica."
+  },
+  {
+    "id": "solucion_002",
+    "nombre": "Microsoft 365 Business Standard",
+    "categoria": "Licenciamiento de software",
+    "descripcion": "Suite SaaS con correo empresarial, Teams, OneDrive y aplicaciones de escritorio de Office.",
+    "caracteristicas_principales": [
+      "Aplicaciones de escritorio Office",
+      "Exchange Online",
+      "Teams",
+      "OneDrive y SharePoint"
+    ],
+    "requisitos_que_cubre": [
+      "licencias office",
+      "correo corporativo",
+      "colaboración",
+      "aplicaciones de escritorio"
+    ],
+    "restricciones": [
+      "No reemplaza controles avanzados de ciberseguridad"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Recomendable cuando se solicitan aplicaciones Office instalables."
+  },
+  {
+    "id": "solucion_003",
+    "nombre": "Microsoft Power BI Pro",
+    "categoria": "Business Intelligence",
+    "descripcion": "Licencia para creación, publicación y colaboración de reportes y dashboards de BI.",
+    "caracteristicas_principales": [
+      "Dashboards interactivos",
+      "Publicación en Power BI Service",
+      "Conectores de datos",
+      "Compartición de reportes"
+    ],
+    "requisitos_que_cubre": [
+      "dashboard",
+      "indicadores",
+      "reportes",
+      "analítica"
+    ],
+    "restricciones": [
+      "Requiere licenciamiento por usuario para colaboración"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Adecuado para equipos pequeños o medianos de analítica."
+  },
+  {
+    "id": "solucion_004",
+    "nombre": "Microsoft Power BI Premium Per User",
+    "categoria": "Business Intelligence",
+    "descripcion": "Licenciamiento avanzado de Power BI con capacidades premium por usuario.",
+    "caracteristicas_principales": [
+      "Modelos de mayor tamaño",
+      "Paginación de reportes",
+      "AI visuals",
+      "Actualizaciones mejoradas"
+    ],
+    "requisitos_que_cubre": [
+      "business intelligence avanzado",
+      "reportes corporativos",
+      "modelos grandes",
+      "analítica empresarial"
+    ],
+    "restricciones": [
+      "No equivale a capacidad dedicada para toda la organización"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Útil cuando el TDR exige capacidades premium sin capacidad dedicada."
+  },
+  {
+    "id": "solucion_005",
+    "nombre": "Google Workspace Business Standard",
+    "categoria": "Cloud / SaaS",
+    "descripcion": "Suite SaaS de productividad, correo, almacenamiento y videoconferencia de Google.",
+    "caracteristicas_principales": [
+      "Gmail empresarial",
+      "Google Drive",
+      "Google Meet",
+      "Documentos colaborativos"
+    ],
+    "requisitos_que_cubre": [
+      "correo corporativo",
+      "colaboración",
+      "almacenamiento en nube",
+      "videoconferencia"
+    ],
+    "restricciones": [
+      "Depende del ecosistema Google"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Alternativa para organizaciones orientadas a herramientas Google."
+  },
+  {
+    "id": "solucion_006",
+    "nombre": "Adobe Creative Cloud for Teams",
+    "categoria": "Licenciamiento de software",
+    "descripcion": "Licenciamiento por suscripción para aplicaciones creativas de Adobe en equipos.",
+    "caracteristicas_principales": [
+      "Photoshop",
+      "Illustrator",
+      "InDesign",
+      "Administración de usuarios"
+    ],
+    "requisitos_que_cubre": [
+      "diseño gráfico",
+      "edición multimedia",
+      "licencias adobe",
+      "creatividad"
+    ],
+    "restricciones": [
+      "No es una solución de gestión documental"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Aplicable para áreas de comunicación, diseño o producción multimedia."
+  },
+  {
+    "id": "solucion_007",
+    "nombre": "Adobe Acrobat Standard",
+    "categoria": "Licenciamiento de software",
+    "descripcion": "Licencia para creación, edición, conversión y firma básica de documentos PDF.",
+    "caracteristicas_principales": [
+      "Edición de PDF",
+      "Conversión de documentos",
+      "Firma electrónica básica",
+      "Protección de PDF"
+    ],
+    "requisitos_que_cubre": [
+      "edición pdf",
+      "documentos",
+      "conversión",
+      "firma"
+    ],
+    "restricciones": [
+      "No incluye todas las capacidades avanzadas de Acrobat Pro"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Recomendable para necesidades documentales PDF estándar."
+  },
+  {
+    "id": "solucion_008",
+    "nombre": "Sophos Intercept X Advanced with XDR",
+    "categoria": "Antivirus / EDR / XDR",
+    "descripcion": "Protección endpoint con EDR/XDR para detección, investigación y respuesta ante amenazas.",
+    "caracteristicas_principales": [
+      "Protección endpoint",
+      "EDR/XDR",
+      "Antiransomware",
+      "Consola centralizada"
+    ],
+    "requisitos_que_cubre": [
+      "edr",
+      "xdr",
+      "antivirus",
+      "protección endpoint",
+      "respuesta ante amenazas"
+    ],
+    "restricciones": [
+      "Requiere dimensionar endpoints y vigencia"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Opción fuerte cuando el TDR menciona EDR, XDR o respuesta ante amenazas."
+  },
+  {
+    "id": "solucion_009",
+    "nombre": "Sophos Intercept X Advanced for Server with XDR",
+    "categoria": "Antivirus / EDR / XDR",
+    "descripcion": "Protección avanzada para servidores con capacidades XDR.",
+    "caracteristicas_principales": [
+      "Protección de servidores",
+      "XDR",
+      "Prevención de ransomware",
+      "Gestión centralizada"
+    ],
+    "requisitos_que_cubre": [
+      "servidores",
+      "xdr",
+      "protección antimalware",
+      "seguridad de cargas"
+    ],
+    "restricciones": [
+      "Debe separarse del licenciamiento para estaciones de trabajo"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Complementa protección endpoint cuando existen servidores en alcance."
+  },
+  {
+    "id": "solucion_010",
+    "nombre": "Kaspersky Next EDR Foundations",
+    "categoria": "Antivirus / EDR / XDR",
+    "descripcion": "Solución de seguridad endpoint con capacidades EDR fundacionales.",
+    "caracteristicas_principales": [
+      "Antimalware",
+      "EDR básico",
+      "Control de dispositivos",
+      "Consola de gestión"
+    ],
+    "requisitos_que_cubre": [
+      "edr",
+      "endpoint",
+      "antivirus",
+      "gestión centralizada"
+    ],
+    "restricciones": [
+      "Validar cumplimiento regulatorio y políticas institucionales"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Alternativa para TDR con requerimientos EDR de entrada."
+  },
+  {
+    "id": "solucion_011",
+    "nombre": "ESET PROTECT",
+    "categoria": "Antivirus / EDR / XDR",
+    "descripcion": "Plataforma de protección endpoint administrable para estaciones y servidores.",
+    "caracteristicas_principales": [
+      "Antivirus endpoint",
+      "Administración centralizada",
+      "Políticas de seguridad",
+      "Reportes"
+    ],
+    "requisitos_que_cubre": [
+      "antivirus",
+      "protección endpoint",
+      "consola centralizada",
+      "reportes de seguridad"
+    ],
+    "restricciones": [
+      "Capacidades XDR dependen de edición seleccionada"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Adecuado para protección endpoint tradicional y administrada."
+  },
+  {
+    "id": "solucion_012",
+    "nombre": "Fortinet FortiGate",
+    "categoria": "Firewall",
+    "descripcion": "Firewall de próxima generación para seguridad perimetral, VPN y filtrado.",
+    "caracteristicas_principales": [
+      "NGFW",
+      "VPN",
+      "IPS",
+      "Filtrado web",
+      "Alta disponibilidad"
+    ],
+    "requisitos_que_cubre": [
+      "firewall",
+      "vpn",
+      "seguridad perimetral",
+      "ips",
+      "filtrado web"
+    ],
+    "restricciones": [
+      "Requiere dimensionamiento por throughput, usuarios y servicios"
+    ],
+    "modalidad": "hardware",
+    "observaciones": "Recomendable cuando se solicitan controles perimetrales."
+  },
+  {
+    "id": "solucion_013",
+    "nombre": "FortiMail Cloud",
+    "categoria": "Antispam / correo seguro",
+    "descripcion": "Servicio cloud de seguridad para correo electrónico contra spam, malware y phishing.",
+    "caracteristicas_principales": [
+      "Antispam",
+      "Protección antiphishing",
+      "Filtrado de malware",
+      "Continuidad de correo"
+    ],
+    "requisitos_que_cubre": [
+      "correo seguro",
+      "antispam",
+      "phishing",
+      "mail gateway"
+    ],
+    "restricciones": [
+      "Debe integrarse con el dominio y plataforma de correo existente"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Compatible con requerimientos de protección de correo."
+  },
+  {
+    "id": "solucion_014",
+    "nombre": "Zoom Workplace",
+    "categoria": "Colaboración y videoconferencia",
+    "descripcion": "Plataforma SaaS para videoconferencia, reuniones, chat y colaboración.",
+    "caracteristicas_principales": [
+      "Videoconferencias",
+      "Salas de reuniones",
+      "Chat",
+      "Grabación"
+    ],
+    "requisitos_que_cubre": [
+      "videoconferencia",
+      "reuniones virtuales",
+      "colaboración",
+      "grabación"
+    ],
+    "restricciones": [
+      "Validar número de anfitriones, participantes y almacenamiento"
+    ],
+    "modalidad": "SaaS",
+    "observaciones": "Recomendable para TDR centrados en reuniones virtuales."
+  },
+  {
+    "id": "solucion_015",
+    "nombre": "Hosting cPanel",
+    "categoria": "Hosting / cPanel / VPS",
+    "descripcion": "Servicio de hosting administrado con panel cPanel para sitios web y correo básico.",
+    "caracteristicas_principales": [
+      "cPanel",
+      "Hosting web",
+      "Correo básico",
+      "SSL"
+    ],
+    "requisitos_que_cubre": [
+      "hosting",
+      "cpanel",
+      "sitio web",
+      "dominio",
+      "ssl"
+    ],
+    "restricciones": [
+      "No es ideal para cargas de alta personalización o consumo intensivo"
+    ],
+    "modalidad": "servicio",
+    "observaciones": "Adecuado para sitios institucionales de complejidad baja o media."
+  },
+  {
+    "id": "solucion_016",
+    "nombre": "VPS administrado",
+    "categoria": "Hosting / cPanel / VPS",
+    "descripcion": "Servidor virtual administrado para aplicaciones, bases de datos o servicios web.",
+    "caracteristicas_principales": [
+      "Servidor virtual",
+      "Administración del sistema",
+      "Escalabilidad",
+      "Monitoreo básico"
+    ],
+    "requisitos_que_cubre": [
+      "vps",
+      "servidor virtual",
+      "hosting avanzado",
+      "aplicaciones web"
+    ],
+    "restricciones": [
+      "Debe definirse CPU, RAM, almacenamiento, sistema operativo y SLA"
+    ],
+    "modalidad": "servicio",
+    "observaciones": "Recomendable cuando el TDR requiere más control que hosting compartido."
+  },
+  {
+    "id": "solucion_017",
+    "nombre": "Backup cloud",
+    "categoria": "Backup y recuperación",
+    "descripcion": "Servicio de respaldos en la nube para protección y recuperación de información.",
+    "caracteristicas_principales": [
+      "Copias automáticas",
+      "Retención configurable",
+      "Restauración",
+      "Almacenamiento en nube"
+    ],
+    "requisitos_que_cubre": [
+      "backup",
+      "respaldo",
+      "recuperación",
+      "retención",
+      "restauración"
+    ],
+    "restricciones": [
+      "Debe definirse volumen, frecuencia, retención y RPO/RTO"
+    ],
+    "modalidad": "servicio",
+    "observaciones": "Adecuado para TDR orientados a continuidad y protección de datos."
+  },
+  {
+    "id": "solucion_018",
+    "nombre": "Certificados SSL",
+    "categoria": "Hosting / cPanel / VPS",
+    "descripcion": "Certificados digitales SSL/TLS para cifrado HTTPS de sitios y servicios web.",
+    "caracteristicas_principales": [
+      "Cifrado HTTPS",
+      "Validación de dominio",
+      "Compatibilidad web",
+      "Renovación anual"
+    ],
+    "requisitos_que_cubre": [
+      "ssl",
+      "https",
+      "certificado digital",
+      "seguridad web"
+    ],
+    "restricciones": [
+      "No protege por sí solo la aplicación o infraestructura"
+    ],
+    "modalidad": "licencia anual",
+    "observaciones": "Complemento para hosting, VPS o aplicaciones web públicas."
+  }
+]

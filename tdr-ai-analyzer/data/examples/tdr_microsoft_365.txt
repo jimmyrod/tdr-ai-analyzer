@@ -1,0 +1,18 @@
+OBJETO:
+Contratar licencias de productividad en la nube para correo corporativo, almacenamiento y colaboración institucional.
+
+ALCANCE:
+La entidad requiere una solución SaaS que permita gestionar usuarios, correo electrónico institucional, videoconferencia, almacenamiento en nube y edición de documentos. El proveedor deberá realizar activación de cuentas, configuración inicial y capacitación a usuarios administradores.
+
+REQUISITOS TÉCNICOS:
+Debe incluir correo corporativo con dominio institucional.
+Debe permitir videoconferencias y colaboración mediante chat y reuniones.
+Debe incluir almacenamiento en nube por usuario.
+Debe permitir administración centralizada de usuarios.
+Debe contemplar soporte técnico durante la vigencia del servicio.
+
+PRODUCTOS ESPERADOS:
+Licencias activas para usuarios finales.
+Informe de configuración inicial.
+Capacitación para administradores.
+Soporte técnico documentado.
