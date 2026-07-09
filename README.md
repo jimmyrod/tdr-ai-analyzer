@@ -16,7 +16,7 @@ tdr-ai-analyzer/
 │   ├── text_cleaner.py      # Limpieza y normalización
 │   ├── chunker.py           # Fragmentación del texto
 │   ├── embeddings.py        # OpenAI embeddings o fallback hash local
-│   ├── vector_store.py      # Base vectorial local JSON
+│   ├── vector_store.py      # Base vectorial en Supabase (pgvector), con fallback JSON local
 │   ├── knowledge_base.py    # Lectura de soluciones tecnológicas
 │   ├── rag_engine.py        # Orquestación RAG y análisis estructurado
 │   ├── classifier.py        # Clasificación tecnológica heurística
@@ -76,9 +76,21 @@ OPENAI_API_KEY=
 MODEL_NAME=gpt-4.1-mini
 EMBEDDING_MODEL=text-embedding-3-small
 VECTOR_STORE_PATH=data/processed/chroma
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
 ```
 
 Si `OPENAI_API_KEY` está vacío, el sistema funciona en modo demo con embeddings hash locales y análisis heurístico estructurado.
+
+### Base vectorial en Supabase
+
+Cada documento analizado se trocea, se convierte en embeddings y se guarda en Supabase (Postgres + pgvector) en la tabla `document_chunks`, en vez de un JSON local. Así el sistema acumula contexto de todos los TDR analizados y lo usa como evidencia para nuevos análisis.
+
+1. En tu proyecto de Supabase self-hosted, abre **SQL Editor** en Supabase Studio y ejecuta una sola vez el script [`supabase/schema.sql`](supabase/schema.sql). Crea la extensión `vector`, la tabla `document_chunks`, los índices y la función `match_document_chunks` usada para la búsqueda por similitud.
+2. Completa en `.env`:
+   - `SUPABASE_URL`: URL de tu API (ej. `http://tu-servidor:8000`).
+   - `SUPABASE_SECRET_KEY`: la **secret key** (`service_role`), no la publishable/anon. Se usa solo del lado del servidor y nunca debe exponerse en el navegador ni commitearse.
+3. Si `SUPABASE_URL` o `SUPABASE_SECRET_KEY` están vacíos, o si Supabase no responde, el sistema cae automáticamente a un almacén JSON local (`VECTOR_STORE_PATH`) para no interrumpir el análisis.
 
 ## Ejecución local
 
@@ -151,11 +163,10 @@ El módulo de evaluación calcula:
 - No realiza evaluación legal, contractual ni financiera.
 - El modo demo usa heurísticas y no reemplaza un modelo generativo real.
 - La calidad del análisis depende de la claridad del TDR y de la base de conocimiento.
-- La base vectorial incluida es local y simple; puede sustituirse por ChromaDB o FAISS en una versión posterior.
+- La base vectorial usa Supabase/pgvector; sin configurarlo, cae a un JSON local simple.
 
 ## Próximas mejoras
 
-- Integrar ChromaDB como backend vectorial principal.
 - Añadir esquemas JSON estrictos para respuestas generativas.
 - Mejorar extracción de tablas desde PDF.
 - Añadir autenticación y gestión de usuarios.

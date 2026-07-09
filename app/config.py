@@ -36,6 +36,8 @@ class Settings:
     openai_api_key: str
     model_name: str
     embedding_model: str
+    supabase_url: str
+    supabase_secret_key: str
     chunk_size: int = 1200
     chunk_overlap: int = 180
     manual_analysis_minutes: float = 60.0
@@ -43,6 +45,10 @@ class Settings:
     @property
     def has_openai_key(self) -> bool:
         return bool(self.openai_api_key.strip())
+
+    @property
+    def has_supabase(self) -> bool:
+        return bool(self.supabase_url.strip() and self.supabase_secret_key.strip())
 
 
 def get_settings() -> Settings:
@@ -69,6 +75,8 @@ def get_settings() -> Settings:
         model_name=os.getenv("MODEL_NAME", "gpt-4.1-mini").strip() or "gpt-4.1-mini",
         embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small").strip()
         or "text-embedding-3-small",
+        supabase_url=os.getenv("SUPABASE_URL", "").strip(),
+        supabase_secret_key=os.getenv("SUPABASE_SECRET_KEY", "").strip(),
     )
 
 

@@ -27,8 +27,12 @@ class RAGEngine:
         ensure_directories(self.settings)
         self.chunker = TextChunker(self.settings.chunk_size, self.settings.chunk_overlap)
         self.embedding_provider = EmbeddingProvider(self.settings)
-        self.vector_store = VectorStore(vector_store_path or self.settings.vector_store_path)
-        self.knowledge_base = knowledge_base or KnowledgeBase.load(self.settings.knowledge_base_path)
+        self.vector_store = VectorStore(
+            vector_store_path or self.settings.vector_store_path, settings=self.settings
+        )
+        self.knowledge_base = knowledge_base or KnowledgeBase.load(
+            self.settings.knowledge_base_path, settings=self.settings
+        )
         self.recommender = RecommendationEngine(self.knowledge_base)
 
     def analyze_document(self, document_name: str, raw_text: str) -> AnalysisResult:
@@ -60,7 +64,9 @@ class RAGEngine:
 
         query = " ".join([classification.category, object_text] + [req.descripcion for req in requirements])
         query_embedding = self.embedding_provider.embed_text(query)
-        retrieved = self.vector_store.similarity_search(query_embedding, top_k=4, document_name=document_name)
+        # No document_name filter: the vector store accumulates every analyzed TDR,
+        # so retrieval draws on the whole history, not just this document's own chunks.
+        retrieved = self.vector_store.similarity_search(query_embedding, top_k=4)
         retrieved_texts = [record.text[:700] for record in retrieved] or [chunk.text[:700] for chunk in chunks[:2]]
 
         recommendation = self.recommender.recommend(

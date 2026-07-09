@@ -1,10 +1,17 @@
+from app.config import get_settings
 from app.rag_engine import RAGEngine
 from app.schemas import AnalysisResult, RecommendedSolution
 
 
+def _offline_settings(openai_api_key: str = ""):
+    settings = get_settings()
+    object.__setattr__(settings, "openai_api_key", openai_api_key)
+    object.__setattr__(settings, "supabase_url", "")
+    return settings
+
+
 def test_rag_engine_demo_generates_structured_analysis(tmp_path):
-    engine = RAGEngine(vector_store_path=tmp_path / "vectors")
-    object.__setattr__(engine.settings, "openai_api_key", "")
+    engine = RAGEngine(settings=_offline_settings(), vector_store_path=tmp_path / "vectors")
     text = """
     OBJETO: Contratar licencias de Microsoft 365 para correo corporativo,
     almacenamiento en OneDrive y videoconferencia. El proveedor debe incluir
@@ -29,8 +36,9 @@ def test_rag_engine_demo_generates_structured_analysis(tmp_path):
 
 
 def test_rag_engine_marks_openai_result_when_generation_succeeds(tmp_path, monkeypatch):
-    engine = RAGEngine(vector_store_path=tmp_path / "vectors")
-    object.__setattr__(engine.settings, "openai_api_key", "sk-test-redacted")
+    engine = RAGEngine(
+        settings=_offline_settings("sk-test-redacted"), vector_store_path=tmp_path / "vectors"
+    )
     monkeypatch.setattr(engine.embedding_provider, "embed_texts", lambda texts: [[0.1] * 96 for _ in texts])
     monkeypatch.setattr(engine.embedding_provider, "embed_text", lambda text: [0.1] * 96)
 
@@ -65,8 +73,9 @@ def test_rag_engine_marks_openai_result_when_generation_succeeds(tmp_path, monke
 
 
 def test_rag_engine_reports_openai_fallback_reason(tmp_path, monkeypatch):
-    engine = RAGEngine(vector_store_path=tmp_path / "vectors")
-    object.__setattr__(engine.settings, "openai_api_key", "sk-test-redacted")
+    engine = RAGEngine(
+        settings=_offline_settings("sk-test-redacted"), vector_store_path=tmp_path / "vectors"
+    )
     monkeypatch.setattr(engine.embedding_provider, "embed_texts", lambda texts: [[0.1] * 96 for _ in texts])
     monkeypatch.setattr(engine.embedding_provider, "embed_text", lambda text: [0.1] * 96)
 

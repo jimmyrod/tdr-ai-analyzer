@@ -3,9 +3,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.schemas import Solution
 from app.text_cleaner import normalize_for_matching
+
+SOLUTIONS_TABLE = "solutions"
+SOLUTIONS_FIELDS = (
+    "id",
+    "nombre",
+    "categoria",
+    "descripcion",
+    "caracteristicas_principales",
+    "requisitos_que_cubre",
+    "restricciones",
+    "modalidad",
+    "observaciones",
+)
 
 
 class KnowledgeBase:
@@ -13,11 +26,35 @@ class KnowledgeBase:
         self._solutions = solutions
 
     @classmethod
-    def load(cls, path: Path | None = None) -> "KnowledgeBase":
-        path = path or get_settings().knowledge_base_path
+    def load(cls, path: Path | None = None, settings: Settings | None = None) -> "KnowledgeBase":
+        settings = settings or get_settings()
+        path = path or settings.knowledge_base_path
+        if settings.has_supabase:
+            try:
+                return cls._load_from_supabase(settings)
+            except Exception:
+                # Keep the app usable even if Supabase is unreachable or misconfigured.
+                pass
         if not path.exists():
             return cls([])
         records = json.loads(path.read_text(encoding="utf-8"))
+        return cls.from_records(records)
+
+    @classmethod
+    def _load_from_supabase(cls, settings: Settings) -> "KnowledgeBase":
+        from supabase import create_client
+
+        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        response = client.table(SOLUTIONS_TABLE).select(",".join(SOLUTIONS_FIELDS)).execute()
+        records = [
+            {
+                **row,
+                "caracteristicas_principales": row.get("caracteristicas_principales") or [],
+                "requisitos_que_cubre": row.get("requisitos_que_cubre") or [],
+                "restricciones": row.get("restricciones") or [],
+            }
+            for row in (response.data or [])
+        ]
         return cls.from_records(records)
 
     @classmethod

@@ -22,7 +22,7 @@ def cosine_similarity(left: list[float], right: list[float]) -> float:
 @dataclass
 class EmbeddingProvider:
     settings: Settings | None = None
-    dimensions: int = 96
+    dimensions: int = 1536
 
     def __post_init__(self) -> None:
         self.settings = self.settings or get_settings()
