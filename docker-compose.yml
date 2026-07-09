@@ -1,0 +1,12 @@
+services:
+  tdr-ai-analyzer:
+    build: .
+    container_name: tdr-ai-analyzer
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
