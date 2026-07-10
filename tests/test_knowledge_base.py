@@ -9,16 +9,33 @@ class FakeSelectQuery:
     def __init__(self, data):
         self._data = data
 
+    def eq(self, column, value):
+        return self
+
     def execute(self):
         return SimpleNamespace(data=self._data)
+
+
+class FakeUpsertQuery:
+    def __init__(self, table, row):
+        self.table = table
+        self.row = row
+
+    def execute(self):
+        self.table.upserted.append(self.row)
+        return SimpleNamespace(data=[self.row])
 
 
 class FakeTable:
     def __init__(self, data):
         self._data = data
+        self.upserted = []
 
     def select(self, columns):
         return FakeSelectQuery(self._data)
+
+    def upsert(self, row):
+        return FakeUpsertQuery(self, row)
 
 
 class FakeRpcQuery:
@@ -35,11 +52,12 @@ class FakeSupabaseClient:
         self._raise_error = raise_error
         self._rpc_data = rpc_data or []
         self.rpc_calls = []
+        self.tables: dict[str, FakeTable] = {}
 
     def table(self, name):
         if self._raise_error:
             raise RuntimeError("supabase unreachable")
-        return FakeTable(self._data)
+        return self.tables.setdefault(name, FakeTable(self._data))
 
     def rpc(self, name, params):
         if self._raise_error:
@@ -129,9 +147,37 @@ def test_knowledge_base_search_by_vector_maps_rows_with_similarity(monkeypatch):
     results = kb.search_by_vector([0.1, 0.2], settings, top_k=3)
 
     assert fake_client.rpc_calls == [
-        ("match_solutions", {"query_embedding": [0.1, 0.2], "match_count": 3})
+        (
+            "match_solutions",
+            {"query_embedding": [0.1, 0.2], "match_count": 3, "filter_origen": None},
+        )
     ]
     assert len(results) == 1
     solution, similarity = results[0]
     assert solution.nombre == "Backup cloud"
     assert similarity == 0.87
+
+
+def test_knowledge_base_add_solution_upserts_row(monkeypatch):
+    settings = _supabase_settings()
+    fake_client = FakeSupabaseClient()
+    monkeypatch.setattr("supabase.create_client", lambda url, key: fake_client)
+
+    kb = KnowledgeBase([])
+    row = {
+        "id": "analisis:tdr_backup.txt",
+        "nombre": "Backup para servidores",
+        "categoria": "Backup y recuperación",
+        "descripcion": "resumen",
+        "caracteristicas_principales": [],
+        "requisitos_que_cubre": [],
+        "restricciones": [],
+        "modalidad": "",
+        "observaciones": "",
+        "origen": "analisis",
+        "embedding": [0.1, 0.2],
+    }
+
+    kb.add_solution(row, settings)
+
+    assert fake_client.tables["solutions"].upserted == [row]

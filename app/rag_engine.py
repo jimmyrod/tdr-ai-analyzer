@@ -54,6 +54,7 @@ class RAGEngine:
             openai_result.modo_demo = False
             openai_result.proveedor_ia = "OpenAI Responses API"
             openai_result.error_openai = ""
+            self._feed_solutions_from_analysis(document_name, openai_result)
             return openai_result
 
         classification = classify_requirement(text)
@@ -80,7 +81,7 @@ class RAGEngine:
             openai_error,
         )
 
-        return AnalysisResult(
+        result = AnalysisResult(
             nombre_documento=document_name,
             resumen_general=summary,
             objeto_requerimiento=object_text,
@@ -97,6 +98,44 @@ class RAGEngine:
             proveedor_ia="Demo local",
             error_openai=openai_error,
         )
+        self._feed_solutions_from_analysis(document_name, result)
+        return result
+
+    def _feed_solutions_from_analysis(self, document_name: str, result: AnalysisResult) -> None:
+        """Store what this TDR asked for as an origen='analisis' row in 'solutions'."""
+        if not self.settings.has_supabase:
+            return
+        try:
+            text = " ".join(
+                [result.categoria_tecnologica, result.objeto_requerimiento]
+                + [req.descripcion for req in result.requisitos_tecnicos]
+            )
+            embedding = self.embedding_provider.embed_text(text)
+            row = {
+                "id": f"analisis:{document_name}",
+                "nombre": (result.objeto_requerimiento or document_name)[:150],
+                "categoria": result.categoria_tecnologica,
+                "descripcion": result.resumen_general[:2000],
+                "caracteristicas_principales": result.productos_o_servicios_esperados,
+                "requisitos_que_cubre": [req.descripcion for req in result.requisitos_tecnicos],
+                "restricciones": result.datos_faltantes_o_ambiguos,
+                "modalidad": self._infer_modalidad(result),
+                "observaciones": result.observaciones[:2000],
+                "origen": "analisis",
+                "embedding": embedding,
+            }
+            self.knowledge_base.add_solution(row, self.settings)
+        except Exception:
+            # Feeding the catalog is best-effort; never break the analysis over it.
+            pass
+
+    def _infer_modalidad(self, result: AnalysisResult) -> str:
+        """Copy the modalidad of the recommended solution when it matches a known one."""
+        target = normalize_for_matching(result.solucion_recomendada.nombre)
+        for solution in self.knowledge_base.all():
+            if normalize_for_matching(solution.nombre) == target:
+                return solution.modalidad
+        return ""
 
     def _recommend_solution(
         self,

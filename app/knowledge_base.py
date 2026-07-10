@@ -18,6 +18,7 @@ SOLUTIONS_FIELDS = (
     "restricciones",
     "modalidad",
     "observaciones",
+    "origen",
 )
 
 
@@ -29,6 +30,7 @@ def _solution_record_from_row(row: dict) -> dict:
     record["restricciones"] = record.get("restricciones") or []
     record["modalidad"] = record.get("modalidad") or ""
     record["observaciones"] = record.get("observaciones") or ""
+    record["origen"] = record.get("origen") or "catalogo"
     return record
 
 
@@ -61,19 +63,35 @@ class KnowledgeBase:
         return cls.from_records(records)
 
     def search_by_vector(
-        self, query_embedding: list[float], settings: Settings, top_k: int = 5
+        self,
+        query_embedding: list[float],
+        settings: Settings,
+        top_k: int = 5,
+        filter_origen: str | None = None,
     ) -> list[tuple[Solution, float]]:
         """Semantic search against the 'solutions' table via the match_solutions RPC."""
         from supabase import create_client
 
         client = create_client(settings.supabase_url, settings.supabase_secret_key)
         response = client.rpc(
-            "match_solutions", {"query_embedding": query_embedding, "match_count": top_k}
+            "match_solutions",
+            {
+                "query_embedding": query_embedding,
+                "match_count": top_k,
+                "filter_origen": filter_origen,
+            },
         ).execute()
         return [
             (Solution(**_solution_record_from_row(row)), float(row.get("similarity", 0.0)))
             for row in (response.data or [])
         ]
+
+    def add_solution(self, row: dict, settings: Settings) -> None:
+        """Upsert a row into the 'solutions' table (e.g. a case fed by an analysis)."""
+        from supabase import create_client
+
+        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        client.table(SOLUTIONS_TABLE).upsert(row).execute()
 
     @classmethod
     def from_records(cls, records: list[dict]) -> "KnowledgeBase":

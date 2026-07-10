@@ -1,6 +1,6 @@
 from app.config import get_settings
 from app.rag_engine import RAGEngine
-from app.schemas import AnalysisResult, RecommendedSolution
+from app.schemas import AnalysisResult, RecommendationResult, RecommendedSolution
 
 
 def _offline_settings(openai_api_key: str = ""):
@@ -89,3 +89,64 @@ def test_rag_engine_reports_openai_fallback_reason(tmp_path, monkeypatch):
     assert result.modo_demo is True
     assert result.proveedor_ia == "Demo local"
     assert "RuntimeError" in result.error_openai
+
+
+def test_rag_engine_feeds_solutions_table_when_supabase_enabled(tmp_path, monkeypatch):
+    engine = RAGEngine(settings=_offline_settings(), vector_store_path=tmp_path / "vectors")
+    monkeypatch.setattr(engine.vector_store, "add_chunks", lambda *a, **k: None)
+    monkeypatch.setattr(engine.vector_store, "similarity_search", lambda *a, **k: [])
+    monkeypatch.setattr(
+        engine.recommender,
+        "recommend_by_vector",
+        lambda *a, **k: RecommendationResult(
+            recommended=None, alternatives=[], confidence=0.0, rationale=""
+        ),
+    )
+    fed_rows = []
+    monkeypatch.setattr(
+        engine.knowledge_base, "add_solution", lambda row, settings: fed_rows.append(row)
+    )
+    object.__setattr__(engine.settings, "supabase_url", "http://fake-supabase")
+    object.__setattr__(engine.settings, "supabase_secret_key", "fake-key")
+
+    result = engine.analyze_document(
+        "tdr_backup.txt", "OBJETO: Contratar backup cloud para servidores institucionales."
+    )
+
+    assert len(fed_rows) == 1
+    row = fed_rows[0]
+    assert row["id"] == "analisis:tdr_backup.txt"
+    assert row["origen"] == "analisis"
+    assert row["categoria"] == result.categoria_tecnologica
+    assert row["embedding"]
+
+
+def _analysis_result_recommending(nombre: str, categoria: str) -> AnalysisResult:
+    return AnalysisResult(
+        nombre_documento="doc.txt",
+        resumen_general="",
+        objeto_requerimiento="",
+        categoria_tecnologica=categoria,
+        requisitos_tecnicos=[],
+        productos_o_servicios_esperados=[],
+        solucion_recomendada=RecommendedSolution(
+            nombre=nombre, categoria=categoria, justificacion="", nivel_confianza="alta"
+        ),
+        alternativas=[],
+        datos_faltantes_o_ambiguos=[],
+        observaciones="",
+    )
+
+
+def test_infer_modalidad_copies_from_matching_catalog_solution(tmp_path):
+    engine = RAGEngine(settings=_offline_settings(), vector_store_path=tmp_path / "vectors")
+    result = _analysis_result_recommending("Backup cloud", "Backup y recuperación")
+
+    assert engine._infer_modalidad(result) == "servicio"
+
+
+def test_infer_modalidad_returns_empty_when_no_catalog_match(tmp_path):
+    engine = RAGEngine(settings=_offline_settings(), vector_store_path=tmp_path / "vectors")
+    result = _analysis_result_recommending("Producto inventado que no existe", "Otro")
+
+    assert engine._infer_modalidad(result) == ""

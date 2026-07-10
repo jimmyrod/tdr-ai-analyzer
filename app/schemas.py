@@ -41,6 +41,7 @@ class Solution:
     restricciones: list[str]
     modalidad: str
     observaciones: str = ""
+    origen: str = "catalogo"
 
 
 @dataclass
