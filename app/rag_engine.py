@@ -69,9 +69,8 @@ class RAGEngine:
         retrieved = self.vector_store.similarity_search(query_embedding, top_k=4)
         retrieved_texts = [record.text[:700] for record in retrieved] or [chunk.text[:700] for chunk in chunks[:2]]
 
-        recommendation = self.recommender.recommend(
-            classification.category,
-            [req.descripcion for req in requirements] + products + retrieved_texts,
+        recommendation = self._recommend_solution(
+            classification.category, requirements, products, retrieved_texts, query_embedding
         )
         recommended_solution = self._build_recommended_solution(recommendation, classification.category, retrieved_texts)
         missing = self._detect_missing_data(text, classification.category)
@@ -97,6 +96,27 @@ class RAGEngine:
             modo_demo=True,
             proveedor_ia="Demo local",
             error_openai=openai_error,
+        )
+
+    def _recommend_solution(
+        self,
+        category: str,
+        requirements: list[Requirement],
+        products: list[str],
+        retrieved_texts: list[str],
+        query_embedding: list[float],
+    ):
+        if self.settings.has_supabase:
+            try:
+                recommendation = self.recommender.recommend_by_vector(query_embedding, self.settings)
+                if recommendation.recommended:
+                    return recommendation
+            except Exception:
+                # Keep the app usable even if Supabase is unreachable or misconfigured.
+                pass
+        return self.recommender.recommend(
+            category,
+            [req.descripcion for req in requirements] + products + retrieved_texts,
         )
 
     def _try_openai_analysis(self, document_name: str, text: str, chunks) -> AnalysisResult | None:

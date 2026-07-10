@@ -21,6 +21,17 @@ SOLUTIONS_FIELDS = (
 )
 
 
+def _solution_record_from_row(row: dict) -> dict:
+    """Whitelist a Supabase row (table select or RPC result) down to Solution's fields."""
+    record = {field: row.get(field) for field in SOLUTIONS_FIELDS}
+    record["caracteristicas_principales"] = record.get("caracteristicas_principales") or []
+    record["requisitos_que_cubre"] = record.get("requisitos_que_cubre") or []
+    record["restricciones"] = record.get("restricciones") or []
+    record["modalidad"] = record.get("modalidad") or ""
+    record["observaciones"] = record.get("observaciones") or ""
+    return record
+
+
 class KnowledgeBase:
     def __init__(self, solutions: list[Solution]):
         self._solutions = solutions
@@ -46,16 +57,23 @@ class KnowledgeBase:
 
         client = create_client(settings.supabase_url, settings.supabase_secret_key)
         response = client.table(SOLUTIONS_TABLE).select(",".join(SOLUTIONS_FIELDS)).execute()
-        records = [
-            {
-                **row,
-                "caracteristicas_principales": row.get("caracteristicas_principales") or [],
-                "requisitos_que_cubre": row.get("requisitos_que_cubre") or [],
-                "restricciones": row.get("restricciones") or [],
-            }
+        records = [_solution_record_from_row(row) for row in (response.data or [])]
+        return cls.from_records(records)
+
+    def search_by_vector(
+        self, query_embedding: list[float], settings: Settings, top_k: int = 5
+    ) -> list[tuple[Solution, float]]:
+        """Semantic search against the 'solutions' table via the match_solutions RPC."""
+        from supabase import create_client
+
+        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        response = client.rpc(
+            "match_solutions", {"query_embedding": query_embedding, "match_count": top_k}
+        ).execute()
+        return [
+            (Solution(**_solution_record_from_row(row)), float(row.get("similarity", 0.0)))
             for row in (response.data or [])
         ]
-        return cls.from_records(records)
 
     @classmethod
     def from_records(cls, records: list[dict]) -> "KnowledgeBase":

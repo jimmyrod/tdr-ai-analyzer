@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.config import Settings
 from app.knowledge_base import KnowledgeBase
 from app.schemas import RecommendationResult, Solution
 from app.text_cleaner import normalize_for_matching
@@ -8,6 +9,34 @@ from app.text_cleaner import normalize_for_matching
 class RecommendationEngine:
     def __init__(self, knowledge_base: KnowledgeBase):
         self.knowledge_base = knowledge_base
+
+    def recommend_by_vector(
+        self, query_embedding: list[float], settings: Settings, top_k: int = 5
+    ) -> RecommendationResult:
+        matches = self.knowledge_base.search_by_vector(query_embedding, settings, top_k=top_k)
+        if not matches:
+            return RecommendationResult(
+                recommended=None,
+                alternatives=[],
+                confidence=0.0,
+                rationale="La busqueda vectorial no encontro soluciones en la base de conocimiento.",
+            )
+
+        best_solution, best_similarity = matches[0]
+        alternatives = [solution for solution, _ in matches[1:4]]
+        confidence = max(0.0, min(0.95, best_similarity))
+        rationale = (
+            f"La solucion '{best_solution.nombre}' ({best_solution.categoria}) fue la mas "
+            f"cercana semanticamente a los requisitos del TDR, con una similitud de "
+            f"{best_similarity:.2f} sobre la base de conocimiento vectorizada en Supabase."
+        )
+
+        return RecommendationResult(
+            recommended=best_solution,
+            alternatives=alternatives,
+            confidence=round(confidence, 2),
+            rationale=rationale,
+        )
 
     def recommend(self, category: str, requirements: list[str]) -> RecommendationResult:
         candidates = self.knowledge_base.all()

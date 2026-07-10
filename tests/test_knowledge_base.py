@@ -21,15 +21,31 @@ class FakeTable:
         return FakeSelectQuery(self._data)
 
 
+class FakeRpcQuery:
+    def __init__(self, data):
+        self._data = data
+
+    def execute(self):
+        return SimpleNamespace(data=self._data)
+
+
 class FakeSupabaseClient:
-    def __init__(self, data=None, raise_error=False):
+    def __init__(self, data=None, raise_error=False, rpc_data=None):
         self._data = data or []
         self._raise_error = raise_error
+        self._rpc_data = rpc_data or []
+        self.rpc_calls = []
 
     def table(self, name):
         if self._raise_error:
             raise RuntimeError("supabase unreachable")
         return FakeTable(self._data)
+
+    def rpc(self, name, params):
+        if self._raise_error:
+            raise RuntimeError("supabase unreachable")
+        self.rpc_calls.append((name, params))
+        return FakeRpcQuery(self._rpc_data)
 
 
 def _supabase_settings():
@@ -90,3 +106,32 @@ def test_knowledge_base_falls_back_to_local_json_on_supabase_error(monkeypatch, 
 
     assert len(kb.all()) == 1
     assert kb.all()[0].nombre == "Solucion local"
+
+
+def test_knowledge_base_search_by_vector_maps_rows_with_similarity(monkeypatch):
+    settings = _supabase_settings()
+    row = {
+        "id": "solucion_001",
+        "nombre": "Backup cloud",
+        "categoria": "Backup y recuperación",
+        "descripcion": "Servicio de respaldo.",
+        "caracteristicas_principales": ["copias automaticas"],
+        "requisitos_que_cubre": ["backup"],
+        "restricciones": [],
+        "modalidad": "servicio",
+        "observaciones": "",
+        "similarity": 0.87,
+    }
+    fake_client = FakeSupabaseClient(rpc_data=[row])
+    monkeypatch.setattr("supabase.create_client", lambda url, key: fake_client)
+
+    kb = KnowledgeBase([])
+    results = kb.search_by_vector([0.1, 0.2], settings, top_k=3)
+
+    assert fake_client.rpc_calls == [
+        ("match_solutions", {"query_embedding": [0.1, 0.2], "match_count": 3})
+    ]
+    assert len(results) == 1
+    solution, similarity = results[0]
+    assert solution.nombre == "Backup cloud"
+    assert similarity == 0.87

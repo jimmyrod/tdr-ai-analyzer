@@ -48,8 +48,6 @@ $$;
 alter table document_chunks enable row level security;
 
 -- Catalogo de soluciones tecnologicas (antes data/knowledge_base/solutions.json).
--- Se guarda el embedding de cada solucion para uso futuro; hoy el recomendador
--- sigue haciendo matching por palabras clave sobre estos mismos campos.
 create table if not exists solutions (
   id text primary key,
   nombre text not null,
@@ -63,5 +61,34 @@ create table if not exists solutions (
   embedding vector(1536),
   created_at timestamptz not null default now()
 );
+
+create index if not exists solutions_embedding_idx
+  on solutions using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+
+create or replace function match_solutions(
+  query_embedding vector(1536),
+  match_count int default 5
+)
+returns table (
+  id text,
+  nombre text,
+  categoria text,
+  descripcion text,
+  caracteristicas_principales jsonb,
+  requisitos_que_cubre jsonb,
+  restricciones jsonb,
+  modalidad text,
+  observaciones text,
+  similarity float
+)
+language sql stable as $$
+  select
+    id, nombre, categoria, descripcion, caracteristicas_principales,
+    requisitos_que_cubre, restricciones, modalidad, observaciones,
+    1 - (embedding <=> query_embedding) as similarity
+  from solutions
+  order by embedding <=> query_embedding
+  limit match_count;
+$$;
 
 alter table solutions enable row level security;
