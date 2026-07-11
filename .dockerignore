@@ -1,0 +1,11 @@
+.env
+.env.local
+.git
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/secrets.toml
+data/uploads/*
+data/processed/*
+data/evaluations/*.db
+outputs/

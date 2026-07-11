@@ -8,6 +8,7 @@ from app.config import ensure_directories, get_settings
 from app.document_loader import load_document, save_uploaded_file
 from app.evaluator import calculate_metrics
 from app.exporter import export_analysis_json, export_analysis_markdown, export_analysis_pdf
+from app.knowledge_base import KnowledgeBase
 from app.offline_evaluation import (
     load_evaluation_cases,
     load_evaluation_cases_payload,
@@ -433,8 +434,8 @@ def _split_table(summary: dict) -> list[dict]:
             {
                 "split": split,
                 "casos": metrics.get("case_count", 0),
-                "precision": metrics.get("precision_requisitos", 0),
-                "recall": metrics.get("recall_requisitos", 0),
+                "precision_requisitos": metrics.get("precision_requisitos", 0),
+                "recall_requisitos": metrics.get("recall_requisitos", 0),
                 "f1_requisitos": metrics.get("f1_score", 0),
                 "exactitud_categoria": metrics.get("exactitud_clasificacion", 0),
                 "coincidencia_solucion": metrics.get("coincidencia_con_experto", 0),
@@ -447,6 +448,7 @@ def _case_rows_table(rows) -> list[dict]:
     return [
         {
             "caso": row.case_id,
+            "documento": row.document_name,
             "split": row.split,
             "categoria_esperada": row.expected_category,
             "categoria_predicha": row.predicted_category,
@@ -455,7 +457,7 @@ def _case_rows_table(rows) -> list[dict]:
             "precision": row.precision_requisitos,
             "recall": row.recall_requisitos,
             "f1": row.f1_score,
-            "grupos": json.dumps(row.groups, ensure_ascii=False),
+            "tiempo_s": row.tiempo_analisis_segundos,
         }
         for row in rows
     ]
@@ -472,11 +474,45 @@ def _render_recent_analyses(st, storage: AnalysisStorage) -> None:
 
 def _render_knowledge_base(st, settings) -> None:
     st.title("Base de conocimiento tecnológica")
-    st.caption("Archivo editable: data/knowledge_base/solutions.json")
-    if settings.knowledge_base_path.exists():
-        st.json(settings.knowledge_base_path.read_text(encoding="utf-8"))
+    kb = KnowledgeBase.load(settings.knowledge_base_path, settings=settings)
+    solutions = kb.all()
+
+    if settings.has_supabase:
+        st.caption(f"Fuente: Supabase (tabla `solutions`) — {len(solutions)} soluciones.")
     else:
-        st.warning("No se encontró la base de conocimiento.")
+        st.caption(
+            f"Fuente: archivo local `data/knowledge_base/solutions.json` — {len(solutions)} soluciones."
+        )
+
+    if not solutions:
+        st.warning("No se encontraron soluciones en la base de conocimiento.")
+        return
+
+    st.dataframe(
+        [
+            {
+                "Nombre": solution.nombre,
+                "Categoría": solution.categoria,
+                "Modalidad": solution.modalidad,
+                "Descripción": solution.descripcion,
+            }
+            for solution in solutions
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    for solution in solutions:
+        with st.expander(f"{solution.nombre} — {solution.categoria}"):
+            st.write(solution.descripcion)
+            st.write("**Características principales:**")
+            st.write(solution.caracteristicas_principales or ["-"])
+            st.write("**Requisitos que cubre:**")
+            st.write(solution.requisitos_que_cubre or ["-"])
+            st.write("**Restricciones:**")
+            st.write(solution.restricciones or ["-"])
+            if solution.observaciones:
+                st.caption(solution.observaciones)
 
 
 def _render_help(st) -> None:
@@ -507,6 +543,21 @@ def _inject_styles(st) -> None:
           --tdr-accent-dark: #064e52;
           --tdr-border: #d7e2df;
           --tdr-panel: #ffffff;
+          --tdr-code-bg: #eef3f2;
+          --tdr-input-bg: #ffffff;
+        }
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --tdr-bg: #0f1a1c;
+            --tdr-sidebar: #142325;
+            --tdr-text: #e7f1ef;
+            --tdr-muted: #9fb4b0;
+            --tdr-accent-dark: #7fe3da;
+            --tdr-border: #24393c;
+            --tdr-panel: #142325;
+            --tdr-code-bg: #1b2c2e;
+            --tdr-input-bg: #142325;
+          }
         }
         .stApp {
           background: var(--tdr-bg);
@@ -518,6 +569,10 @@ def _inject_styles(st) -> None:
         }
         h1, h2, h3, h4, h5, h6, p, label, span, div {
           color: var(--tdr-text);
+        }
+        code {
+          background: var(--tdr-code-bg) !important;
+          color: var(--tdr-text) !important;
         }
         [data-testid="stSidebar"] {
           background: var(--tdr-sidebar);
@@ -551,7 +606,7 @@ def _inject_styles(st) -> None:
         [data-testid="stFileUploaderDropzone"],
         textarea,
         .stTextArea textarea {
-          background: #ffffff !important;
+          background: var(--tdr-input-bg) !important;
           border: 1px solid var(--tdr-border) !important;
           color: var(--tdr-text) !important;
         }

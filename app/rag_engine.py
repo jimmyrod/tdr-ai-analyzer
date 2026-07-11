@@ -27,8 +27,12 @@ class RAGEngine:
         ensure_directories(self.settings)
         self.chunker = TextChunker(self.settings.chunk_size, self.settings.chunk_overlap)
         self.embedding_provider = EmbeddingProvider(self.settings)
-        self.vector_store = VectorStore(vector_store_path or self.settings.vector_store_path)
-        self.knowledge_base = knowledge_base or KnowledgeBase.load(self.settings.knowledge_base_path)
+        self.vector_store = VectorStore(
+            vector_store_path or self.settings.vector_store_path, settings=self.settings
+        )
+        self.knowledge_base = knowledge_base or KnowledgeBase.load(
+            self.settings.knowledge_base_path, settings=self.settings
+        )
         self.recommender = RecommendationEngine(self.knowledge_base)
 
     def analyze_document(self, document_name: str, raw_text: str) -> AnalysisResult:
@@ -50,6 +54,7 @@ class RAGEngine:
             openai_result.modo_demo = False
             openai_result.proveedor_ia = "OpenAI Responses API"
             openai_result.error_openai = ""
+            self._feed_solutions_from_analysis(document_name, openai_result)
             return openai_result
 
         classification = classify_requirement(text)
@@ -60,12 +65,13 @@ class RAGEngine:
 
         query = " ".join([classification.category, object_text] + [req.descripcion for req in requirements])
         query_embedding = self.embedding_provider.embed_text(query)
-        retrieved = self.vector_store.similarity_search(query_embedding, top_k=4, document_name=document_name)
+        # No document_name filter: the vector store accumulates every analyzed TDR,
+        # so retrieval draws on the whole history, not just this document's own chunks.
+        retrieved = self.vector_store.similarity_search(query_embedding, top_k=4)
         retrieved_texts = [record.text[:700] for record in retrieved] or [chunk.text[:700] for chunk in chunks[:2]]
 
-        recommendation = self.recommender.recommend(
-            classification.category,
-            [req.descripcion for req in requirements] + products + retrieved_texts,
+        recommendation = self._recommend_solution(
+            classification.category, requirements, products, retrieved_texts, query_embedding
         )
         recommended_solution = self._build_recommended_solution(recommendation, classification.category, retrieved_texts)
         missing = self._detect_missing_data(text, classification.category)
@@ -75,7 +81,7 @@ class RAGEngine:
             openai_error,
         )
 
-        return AnalysisResult(
+        result = AnalysisResult(
             nombre_documento=document_name,
             resumen_general=summary,
             objeto_requerimiento=object_text,
@@ -91,6 +97,65 @@ class RAGEngine:
             modo_demo=True,
             proveedor_ia="Demo local",
             error_openai=openai_error,
+        )
+        self._feed_solutions_from_analysis(document_name, result)
+        return result
+
+    def _feed_solutions_from_analysis(self, document_name: str, result: AnalysisResult) -> None:
+        """Store what this TDR asked for as an origen='analisis' row in 'solutions'."""
+        if not self.settings.has_supabase:
+            return
+        try:
+            text = " ".join(
+                [result.categoria_tecnologica, result.objeto_requerimiento]
+                + [req.descripcion for req in result.requisitos_tecnicos]
+            )
+            embedding = self.embedding_provider.embed_text(text)
+            row = {
+                "id": f"analisis:{document_name}",
+                "nombre": (result.objeto_requerimiento or document_name)[:150],
+                "categoria": result.categoria_tecnologica,
+                "descripcion": result.resumen_general[:2000],
+                "caracteristicas_principales": result.productos_o_servicios_esperados,
+                "requisitos_que_cubre": [req.descripcion for req in result.requisitos_tecnicos],
+                "restricciones": result.datos_faltantes_o_ambiguos,
+                "modalidad": self._infer_modalidad(result),
+                "observaciones": result.observaciones[:2000],
+                "origen": "analisis",
+                "embedding": embedding,
+            }
+            self.knowledge_base.add_solution(row, self.settings)
+        except Exception:
+            # Feeding the catalog is best-effort; never break the analysis over it.
+            pass
+
+    def _infer_modalidad(self, result: AnalysisResult) -> str:
+        """Copy the modalidad of the recommended solution when it matches a known one."""
+        target = normalize_for_matching(result.solucion_recomendada.nombre)
+        for solution in self.knowledge_base.all():
+            if normalize_for_matching(solution.nombre) == target:
+                return solution.modalidad
+        return ""
+
+    def _recommend_solution(
+        self,
+        category: str,
+        requirements: list[Requirement],
+        products: list[str],
+        retrieved_texts: list[str],
+        query_embedding: list[float],
+    ):
+        if self.settings.has_supabase:
+            try:
+                recommendation = self.recommender.recommend_by_vector(query_embedding, self.settings)
+                if recommendation.recommended:
+                    return recommendation
+            except Exception:
+                # Keep the app usable even if Supabase is unreachable or misconfigured.
+                pass
+        return self.recommender.recommend(
+            category,
+            [req.descripcion for req in requirements] + products + retrieved_texts,
         )
 
     def _try_openai_analysis(self, document_name: str, text: str, chunks) -> AnalysisResult | None:
