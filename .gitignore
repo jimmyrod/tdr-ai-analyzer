@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .streamlit/secrets.toml
+tdr-ai-analyzer/
 data/uploads/*
 data/processed/chroma/*
 data/processed/*.json
@@ -12,6 +13,7 @@ data/evaluations/*.db-*
 outputs/json/*
 outputs/markdown/*
 outputs/pdf/*
+outputs/evaluation/*
 !outputs/json/tdr_backup_cloud_analysis.json
 !outputs/markdown/tdr_backup_cloud_analysis.md
 !outputs/pdf/tdr_backup_cloud_analysis.pdf

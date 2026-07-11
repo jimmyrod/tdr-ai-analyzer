@@ -22,6 +22,14 @@ SOLUTIONS_FIELDS = (
 )
 
 
+def _create_supabase_client(settings: Settings):
+    try:
+        from supabase import create_client
+    except ImportError as exc:
+        raise RuntimeError("Supabase no esta instalado. Ejecute: pip install -r requirements.txt") from exc
+    return create_client(settings.supabase_url, settings.supabase_secret_key)
+
+
 def _solution_record_from_row(row: dict) -> dict:
     """Whitelist a Supabase row (table select or RPC result) down to Solution's fields."""
     record = {field: row.get(field) for field in SOLUTIONS_FIELDS}
@@ -55,9 +63,7 @@ class KnowledgeBase:
 
     @classmethod
     def _load_from_supabase(cls, settings: Settings) -> "KnowledgeBase":
-        from supabase import create_client
-
-        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        client = _create_supabase_client(settings)
         response = client.table(SOLUTIONS_TABLE).select(",".join(SOLUTIONS_FIELDS)).execute()
         records = [_solution_record_from_row(row) for row in (response.data or [])]
         return cls.from_records(records)
@@ -70,9 +76,7 @@ class KnowledgeBase:
         filter_origen: str | None = None,
     ) -> list[tuple[Solution, float]]:
         """Semantic search against the 'solutions' table via the match_solutions RPC."""
-        from supabase import create_client
-
-        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        client = _create_supabase_client(settings)
         response = client.rpc(
             "match_solutions",
             {
@@ -88,9 +92,7 @@ class KnowledgeBase:
 
     def add_solution(self, row: dict, settings: Settings) -> None:
         """Upsert a row into the 'solutions' table (e.g. a case fed by an analysis)."""
-        from supabase import create_client
-
-        client = create_client(settings.supabase_url, settings.supabase_secret_key)
+        client = _create_supabase_client(settings)
         client.table(SOLUTIONS_TABLE).upsert(row).execute()
 
     @classmethod

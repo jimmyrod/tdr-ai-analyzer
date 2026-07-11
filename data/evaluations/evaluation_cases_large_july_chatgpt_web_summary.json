@@ -1,0 +1,28 @@
+{
+  "case_count": 79,
+  "source_count": 79,
+  "generated_at": "2026-07-10T21:31:34",
+  "dataset": "C:\\Users\\ASAP\\Documents\\PROYECTO INTEGRADOR DE MAESTRIA EN INTELIGENCIA ARTIFICIAL\\tdr-ai-analyzer\\data\\evaluations\\evaluation_cases_large_july_chatgpt_web.json",
+  "by_category": {
+    "Antivirus / EDR / XDR": 17,
+    "Business Intelligence": 3,
+    "Cloud / SaaS": 2,
+    "Colaboración y videoconferencia": 1,
+    "Firewall": 26,
+    "Herramientas educativas": 1,
+    "Hosting / cPanel / VPS": 22,
+    "Licenciamiento de software": 6,
+    "Servicios profesionales TI": 1
+  },
+  "by_document_type": {
+    "proforma": 4,
+    "real_tdr": 71,
+    "synthetic_example": 4
+  },
+  "by_split": {
+    "test": 15,
+    "train": 48,
+    "validation": 16
+  },
+  "note": "Dataset construido desde PDFs locales de julio y ejemplos del proyecto. Las etiquetas se generaron como curación experta inicial basada en objeto, producto, proveedor y requisitos detectados; se recomienda revisión humana final."
+}

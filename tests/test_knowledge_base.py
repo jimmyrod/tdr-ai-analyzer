@@ -87,7 +87,7 @@ def test_knowledge_base_loads_from_supabase(monkeypatch, tmp_path):
         "observaciones": "",
     }
     fake_client = FakeSupabaseClient(data=[row])
-    monkeypatch.setattr("supabase.create_client", lambda url, key: fake_client)
+    monkeypatch.setattr("app.knowledge_base._create_supabase_client", lambda settings: fake_client)
 
     kb = KnowledgeBase.load(tmp_path / "solutions.json", settings=settings)
 
@@ -98,7 +98,7 @@ def test_knowledge_base_loads_from_supabase(monkeypatch, tmp_path):
 def test_knowledge_base_falls_back_to_local_json_on_supabase_error(monkeypatch, tmp_path):
     settings = _supabase_settings()
     fake_client = FakeSupabaseClient(raise_error=True)
-    monkeypatch.setattr("supabase.create_client", lambda url, key: fake_client)
+    monkeypatch.setattr("app.knowledge_base._create_supabase_client", lambda settings: fake_client)
 
     local_path = tmp_path / "solutions.json"
     local_path.write_text(
@@ -141,7 +141,7 @@ def test_knowledge_base_search_by_vector_maps_rows_with_similarity(monkeypatch):
         "similarity": 0.87,
     }
     fake_client = FakeSupabaseClient(rpc_data=[row])
-    monkeypatch.setattr("supabase.create_client", lambda url, key: fake_client)
+    monkeypatch.setattr("app.knowledge_base._create_supabase_client", lambda settings: fake_client)
 
     kb = KnowledgeBase([])
     results = kb.search_by_vector([0.1, 0.2], settings, top_k=3)
@@ -161,7 +161,7 @@ def test_knowledge_base_search_by_vector_maps_rows_with_similarity(monkeypatch):
 def test_knowledge_base_add_solution_upserts_row(monkeypatch):
     settings = _supabase_settings()
     fake_client = FakeSupabaseClient()
-    monkeypatch.setattr("supabase.create_client", lambda url, key: fake_client)
+    monkeypatch.setattr("app.knowledge_base._create_supabase_client", lambda settings: fake_client)
 
     kb = KnowledgeBase([])
     row = {

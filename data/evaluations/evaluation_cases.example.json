@@ -1,0 +1,86 @@
+[
+  {
+    "id": "backup-cloud-001",
+    "document_name": "tdr_backup_cloud.txt",
+    "document_path": "data/examples/tdr_backup_cloud.txt",
+    "expected_category": "Backup y recuperación",
+    "expected_solution": "Backup cloud",
+    "expected_requirements": [
+      "backup automático diario",
+      "recuperación granular de archivos",
+      "almacenamiento en nube cifrado",
+      "retención mínima de 90 días",
+      "soporte técnico y monitoreo"
+    ],
+    "groups": {
+      "category": "Backup",
+      "provider": "genérico",
+      "document_quality": "claro",
+      "modality": "servicio"
+    },
+    "split": "train"
+  },
+  {
+    "id": "edr-xdr-001",
+    "document_name": "tdr_edr_xdr.txt",
+    "document_path": "data/examples/tdr_edr_xdr.txt",
+    "expected_category": "Antivirus / EDR / XDR",
+    "expected_solution": "Sophos Intercept X Advanced with XDR",
+    "expected_requirements": [
+      "protección antivirus y antiransomware para endpoints",
+      "capacidades EDR o XDR para análisis de amenazas",
+      "administración centralizada de estaciones de trabajo y servidores",
+      "reportes de incidentes y alertas de seguridad",
+      "soporte técnico y transferencia de conocimiento"
+    ],
+    "groups": {
+      "category": "Ciberseguridad",
+      "provider": "Sophos",
+      "document_quality": "claro",
+      "modality": "licencia anual"
+    },
+    "split": "train"
+  },
+  {
+    "id": "power-bi-001",
+    "document_name": "tdr_power_bi.txt",
+    "document_path": "data/examples/tdr_power_bi.txt",
+    "expected_category": "Business Intelligence",
+    "expected_solution": "Microsoft Power BI Pro",
+    "expected_requirements": [
+      "creación de reportes y dashboards interactivos",
+      "integración con archivos Excel y bases de datos",
+      "publicación web segura de reportes",
+      "actualización periódica de datos",
+      "capacitación para usuarios analistas"
+    ],
+    "groups": {
+      "category": "Business Intelligence",
+      "provider": "Microsoft",
+      "document_quality": "claro",
+      "modality": "SaaS"
+    },
+    "split": "validation"
+  },
+  {
+    "id": "microsoft-365-001",
+    "document_name": "tdr_microsoft_365.txt",
+    "document_path": "data/examples/tdr_microsoft_365.txt",
+    "expected_category": "Licenciamiento de software",
+    "expected_solution": "Microsoft 365 Business Basic",
+    "expected_requirements": [
+      "correo corporativo con dominio institucional",
+      "videoconferencias y colaboración mediante chat y reuniones",
+      "almacenamiento en nube por usuario",
+      "administración centralizada de usuarios",
+      "soporte técnico durante la vigencia del servicio"
+    ],
+    "groups": {
+      "category": "Licenciamiento",
+      "provider": "Microsoft",
+      "document_quality": "claro",
+      "modality": "SaaS"
+    },
+    "split": "validation"
+  }
+]

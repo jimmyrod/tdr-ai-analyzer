@@ -24,7 +24,7 @@ tdr-ai-analyzer/
 │   ├── evaluator.py         # Métricas de validación experta
 │   ├── exporter.py          # Exportación Markdown, JSON y PDF
 │   └── storage.py           # Registro SQLite
-├── supabase/
+├── database/supabase/
 │   └── schema.sql           # Extensión vector, tablas, índices y funciones RPC (correr en Supabase Studio)
 ├── scripts/
 │   ├── migrate_knowledge_base.py   # Sube/actualiza data/knowledge_base/solutions.json en Supabase
@@ -104,7 +104,7 @@ El proyecto usa Postgres + [pgvector](https://github.com/pgvector/pgvector) en S
 
 ### 1. Crear el esquema (una sola vez)
 
-En Supabase Studio → **SQL Editor**, ejecutar el contenido completo de [`supabase/schema.sql`](supabase/schema.sql). Es idempotente (usa `if not exists` / `create or replace` donde aplica), así que volver a correrlo no rompe nada. Crea:
+En Supabase Studio → **SQL Editor**, ejecutar el contenido completo de [`database/supabase/schema.sql`](database/supabase/schema.sql). Es idempotente (usa `if not exists` / `create or replace` donde aplica), así que volver a correrlo no rompe nada. Crea:
 
 - La extensión `vector`.
 - `document_chunks`: fragmentos embebidos de cada TDR analizado, con la función RPC `match_document_chunks` para búsqueda por similitud.
