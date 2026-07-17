@@ -21,6 +21,15 @@ from app.schemas import ExpertEvaluation
 from app.storage import AnalysisStorage
 
 
+AI_PROVIDER_LABELS = {
+    "Automático confiable (OpenAI -> Ollama Cloud -> Ollama local -> demo)": "auto",
+    "Solo OpenAI API": "openai",
+    "Ollama Cloud": "ollama_cloud",
+    "Modelo local real (Ollama)": "local",
+    "Demo heurístico": "demo",
+}
+
+
 def run() -> None:
     try:
         import streamlit as st
@@ -63,11 +72,18 @@ def run() -> None:
         st.sidebar.caption(f"Modelo configurado: `{settings.model_name}`")
     else:
         st.sidebar.warning("Demo sin OPENAI_API_KEY")
+    if settings.has_ollama_cloud_key:
+        st.sidebar.success("Ollama Cloud configurado")
+    else:
+        st.sidebar.warning("Ollama Cloud sin OLLAMA_API_KEY")
+    st.sidebar.caption(f"Modelo cloud: `{settings.ollama_cloud_model}`")
+    st.sidebar.caption(f"Modelo local: `{settings.local_model_name}`")
+    ai_provider = _render_ai_provider_controls(st, settings)
 
     if section == "Nuevo análisis":
-        _render_new_analysis(st, settings, storage)
+        _render_new_analysis(st, settings, storage, ai_provider)
     elif section == "Evaluación del modelo":
-        _render_model_evaluation(st, settings)
+        _render_model_evaluation(st, settings, ai_provider)
     elif section == "Mis análisis":
         _render_recent_analyses(st, storage)
     elif section == "Base de conocimiento":
@@ -76,7 +92,64 @@ def run() -> None:
         _render_help(st)
 
 
-def _render_new_analysis(st, settings, storage: AnalysisStorage) -> None:
+def _render_ai_provider_controls(st, settings) -> str:
+    default_provider = (
+        settings.default_ai_provider
+        if settings.default_ai_provider in {"auto", "openai", "ollama_cloud", "local", "demo"}
+        else "auto"
+    )
+    default_uses_openai = settings.has_openai_key and default_provider in {"auto", "openai"}
+    use_openai = st.sidebar.toggle(
+        "Usar OPENAI_API_KEY",
+        value=default_uses_openai,
+        disabled=not settings.has_openai_key,
+        help="Desactívelo para forzar el modelo generativo local con Ollama.",
+    )
+
+    if use_openai:
+        options = [
+            "Automático confiable (OpenAI -> Ollama Cloud -> Ollama local -> demo)",
+            "Solo OpenAI API",
+            "Ollama Cloud",
+            "Modelo local real (Ollama)",
+            "Demo heurístico",
+        ]
+    else:
+        options = [
+            "Ollama Cloud",
+            "Modelo local real (Ollama)",
+            "Demo heurístico",
+        ]
+    reverse_labels = {value: label for label, value in AI_PROVIDER_LABELS.items()}
+    default_label = reverse_labels.get(default_provider, options[0])
+    if default_label not in options:
+        default_label = options[0]
+
+    label = st.sidebar.radio(
+        "Motor de análisis",
+        options,
+        index=options.index(default_label),
+        help="Ollama Cloud usa https://ollama.com con OLLAMA_API_KEY; Ollama local usa http://localhost:11434.",
+    )
+    provider = AI_PROVIDER_LABELS[label]
+
+    if provider == "local":
+        st.sidebar.info(
+            f"Para usar modelo local: instale Ollama y ejecute `ollama pull {settings.local_model_name}`."
+        )
+    elif provider == "ollama_cloud":
+        if settings.has_ollama_cloud_key:
+            st.sidebar.info("Ollama Cloud usará la API remota de ollama.com y no requiere GPU local.")
+        else:
+            st.sidebar.warning("Configure `OLLAMA_API_KEY` en `.env` para usar Ollama Cloud.")
+    elif provider == "auto":
+        st.sidebar.info("Si OpenAI falla, se intentará Ollama Cloud, luego Ollama local y finalmente demo.")
+    elif provider == "demo":
+        st.sidebar.warning("No se usará ningún modelo generativo; solo reglas locales.")
+    return provider
+
+
+def _render_new_analysis(st, settings, storage: AnalysisStorage, ai_provider: str) -> None:
     st.title("Análisis de Términos de Referencia Tecnológicos")
 
     upload_col, text_col = st.columns([0.9, 1.1])
@@ -99,7 +172,7 @@ def _render_new_analysis(st, settings, storage: AnalysisStorage) -> None:
             path = save_uploaded_file(uploaded, settings)
             text = load_document(path)
             st.session_state["extracted_text"] = text
-            engine = RAGEngine(settings=settings)
+            engine = RAGEngine(settings=settings, ai_provider=ai_provider)
             result = engine.analyze_document(uploaded.name, text)
             analysis_id = storage.save_analysis(result)
             st.session_state["analysis_result"] = result
@@ -128,12 +201,7 @@ def _render_new_analysis(st, settings, storage: AnalysisStorage) -> None:
         metric_cols[1].metric("Requisitos", len(result.requisitos_tecnicos))
         metric_cols[2].metric("Tiempo", f"{result.tiempo_analisis_segundos:.2f}s")
         metric_cols[3].metric("Proveedor IA", result.proveedor_ia)
-        if result.modo_demo and result.error_openai:
-            st.error(f"No se usó OpenAI en este análisis. Fallback activado: {result.error_openai}")
-        elif result.modo_demo:
-            st.warning("Este análisis se generó en modo demo local.")
-        else:
-            st.success(f"Este análisis usó OpenAI correctamente con el modelo {settings.model_name}.")
+        _render_provider_notice(st, settings, result)
         st.subheader("Resumen general")
         st.write(result.resumen_general)
         st.subheader("Objeto o necesidad principal")
@@ -246,7 +314,43 @@ def _render_evaluation_form(st, storage: AnalysisStorage, result) -> None:
         st.json(metrics.__dict__)
 
 
-def _render_model_evaluation(st, settings) -> None:
+def _render_provider_notice(st, settings, result) -> None:
+    if result.modo_demo:
+        errors = [
+            item
+            for item in [
+                result.error_openai,
+                result.error_ollama_cloud,
+                result.error_modelo_local,
+            ]
+            if item
+        ]
+        if errors:
+            st.error("El análisis cayó a demo local. " + " | ".join(errors))
+        else:
+            st.warning("Análisis generado en modo demo heurístico, sin modelo generativo real.")
+        return
+
+    provider = result.proveedor_ia.lower()
+    if provider.startswith("ollama cloud"):
+        st.success(
+            f"Análisis generado con Ollama Cloud: {settings.ollama_cloud_model}."
+        )
+        if result.error_openai:
+            st.caption(f"OpenAI no se usó como resultado final: {result.error_openai}")
+    elif provider.startswith("ollama"):
+        st.success(
+            f"Análisis generado con modelo generativo local real: {settings.local_model_name}."
+        )
+        if result.error_openai:
+            st.caption(f"OpenAI no se usó como resultado final: {result.error_openai}")
+    elif provider.startswith("openai"):
+        st.success("Análisis generado con OpenAI API.")
+    else:
+        st.success(f"Análisis generado con {result.proveedor_ia}.")
+
+
+def _render_model_evaluation(st, settings, ai_provider: str) -> None:
     st.title("Evaluación y optimización del modelo IA")
     default_cases_path = settings.evaluations_dir / "evaluation_cases.example.json"
     output_dir = settings.project_root / "outputs" / "evaluation"
@@ -285,7 +389,7 @@ def _render_model_evaluation(st, settings) -> None:
         try:
             with st.spinner("Ejecutando análisis sobre casos etiquetados..."):
                 cases = _load_cases_for_portal(source, uploaded, default_cases_path, settings)
-                engine = RAGEngine(settings=settings)
+                engine = RAGEngine(settings=settings, ai_provider=ai_provider)
                 rows = run_evaluation(
                     cases,
                     analyze=lambda case: engine.analyze_document(case.document_name, case.text),
@@ -520,12 +624,15 @@ def _render_help(st) -> None:
     st.markdown(
         """
         1. Cargue un documento TDR en PDF, DOCX o TXT.
-        2. Revise el texto extraído.
-        3. Ejecute el análisis para obtener requisitos, categoría y recomendación.
-        4. Exporte el resultado en Markdown, JSON o PDF.
-        5. Registre la validación experta para calcular métricas.
+        2. Seleccione el motor de análisis en la barra lateral.
+        3. Revise el texto extraído.
+        4. Ejecute el análisis para obtener requisitos, categoría y recomendación.
+        5. Exporte el resultado en Markdown, JSON o PDF.
+        6. Registre la validación experta para calcular métricas.
 
-        El sistema puede operar en modo demo si no existe `OPENAI_API_KEY`.
+        Si desactiva `Usar OPENAI_API_KEY`, puede usar Ollama Cloud o el modelo local real con Ollama.
+        Ollama Cloud requiere `OLLAMA_API_KEY` y no necesita GPU local.
+        Si no hay OpenAI, Ollama Cloud ni Ollama local disponible, el sistema cae a modo demo heurístico.
         """
     )
 

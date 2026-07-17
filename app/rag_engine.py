@@ -10,10 +10,63 @@ from app.classifier import classify_requirement
 from app.config import Settings, ensure_directories, get_settings
 from app.embeddings import EmbeddingProvider
 from app.knowledge_base import KnowledgeBase
+from app.local_llm import LocalLLMClient
 from app.recommender import RecommendationEngine
 from app.schemas import AnalysisResult, RecommendedSolution, Requirement
 from app.text_cleaner import clean_text, normalize_for_matching
 from app.vector_store import VectorStore
+
+
+ANALYSIS_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "resumen_general": {"type": "string"},
+        "objeto_requerimiento": {"type": "string"},
+        "categoria_tecnologica": {"type": "string"},
+        "requisitos_tecnicos": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "id": {"type": "string"},
+                    "descripcion": {"type": "string"},
+                    "tipo": {"type": "string"},
+                    "prioridad": {"type": "string"},
+                    "fragmento_fuente": {"type": "string"},
+                },
+                "required": ["id", "descripcion", "tipo", "prioridad", "fragmento_fuente"],
+            },
+        },
+        "productos_o_servicios_esperados": {"type": "array", "items": {"type": "string"}},
+        "solucion_recomendada": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "nombre": {"type": "string"},
+                "categoria": {"type": "string"},
+                "justificacion": {"type": "string"},
+                "nivel_confianza": {"type": "string"},
+            },
+            "required": ["nombre", "categoria", "justificacion", "nivel_confianza"],
+        },
+        "alternativas": {"type": "array", "items": {"type": "string"}},
+        "datos_faltantes_o_ambiguos": {"type": "array", "items": {"type": "string"}},
+        "observaciones": {"type": "string"},
+    },
+    "required": [
+        "resumen_general",
+        "objeto_requerimiento",
+        "categoria_tecnologica",
+        "requisitos_tecnicos",
+        "productos_o_servicios_esperados",
+        "solucion_recomendada",
+        "alternativas",
+        "datos_faltantes_o_ambiguos",
+        "observaciones",
+    ],
+}
 
 
 class RAGEngine:
@@ -22,9 +75,11 @@ class RAGEngine:
         settings: Settings | None = None,
         vector_store_path: Path | None = None,
         knowledge_base: KnowledgeBase | None = None,
+        ai_provider: str | None = None,
     ):
         self.settings = settings or get_settings()
         ensure_directories(self.settings)
+        self.ai_provider = self._normalize_provider(ai_provider or self.settings.default_ai_provider)
         self.chunker = TextChunker(self.settings.chunk_size, self.settings.chunk_overlap)
         self.embedding_provider = EmbeddingProvider(self.settings)
         self.vector_store = VectorStore(
@@ -34,6 +89,17 @@ class RAGEngine:
             self.settings.knowledge_base_path, settings=self.settings
         )
         self.recommender = RecommendationEngine(self.knowledge_base)
+        self.local_llm = LocalLLMClient(
+            model_name=self.settings.local_model_name,
+            base_url=self.settings.local_model_base_url,
+            service_name="Ollama local",
+        )
+        self.ollama_cloud_llm = LocalLLMClient(
+            model_name=self.settings.ollama_cloud_model,
+            base_url=self.settings.ollama_cloud_base_url,
+            api_key=self.settings.ollama_api_key,
+            service_name="Ollama Cloud",
+        )
 
     def analyze_document(self, document_name: str, raw_text: str) -> AnalysisResult:
         start = time.perf_counter()
@@ -43,19 +109,60 @@ class RAGEngine:
         self.vector_store.add_chunks(document_name, chunks, embeddings)
 
         openai_error = ""
-        try:
-            openai_result = self._try_openai_analysis(document_name, text, chunks)
-        except Exception as exc:
-            openai_result = None
-            openai_error = self._safe_error_message(exc)
+        cloud_error = ""
+        local_error = ""
 
-        if openai_result:
-            openai_result.tiempo_analisis_segundos = round(time.perf_counter() - start, 2)
-            openai_result.modo_demo = False
-            openai_result.proveedor_ia = "OpenAI Responses API"
-            openai_result.error_openai = ""
-            self._feed_solutions_from_analysis(document_name, openai_result)
-            return openai_result
+        if self.ai_provider in {"auto", "openai"}:
+            try:
+                openai_result = self._try_openai_analysis(document_name, text, chunks)
+            except Exception as exc:
+                openai_result = None
+                openai_error = self._safe_error_message(exc)
+
+            if openai_result:
+                openai_result.tiempo_analisis_segundos = round(time.perf_counter() - start, 2)
+                openai_result.modo_demo = False
+                openai_result.proveedor_ia = "OpenAI Responses API"
+                openai_result.error_openai = ""
+                openai_result.error_modelo_local = ""
+                self._feed_solutions_from_analysis(document_name, openai_result)
+                return openai_result
+
+        should_try_cloud = self.ai_provider == "ollama_cloud" or (
+            self.ai_provider == "auto" and self.settings.has_ollama_cloud_key
+        )
+        if should_try_cloud:
+            try:
+                cloud_result = self._try_ollama_cloud_analysis(document_name, text, chunks)
+            except Exception as exc:
+                cloud_result = None
+                cloud_error = self._safe_error_message(exc)
+
+            if cloud_result:
+                cloud_result.tiempo_analisis_segundos = round(time.perf_counter() - start, 2)
+                cloud_result.modo_demo = False
+                cloud_result.proveedor_ia = f"Ollama Cloud ({self.settings.ollama_cloud_model})"
+                cloud_result.error_openai = openai_error
+                cloud_result.error_ollama_cloud = ""
+                cloud_result.error_modelo_local = ""
+                self._feed_solutions_from_analysis(document_name, cloud_result)
+                return cloud_result
+
+        if self.ai_provider in {"auto", "local"}:
+            try:
+                local_result = self._try_local_analysis(document_name, text, chunks)
+            except Exception as exc:
+                local_result = None
+                local_error = self._safe_error_message(exc)
+
+            if local_result:
+                local_result.tiempo_analisis_segundos = round(time.perf_counter() - start, 2)
+                local_result.modo_demo = False
+                local_result.proveedor_ia = f"Ollama local ({self.settings.local_model_name})"
+                local_result.error_openai = openai_error
+                local_result.error_modelo_local = ""
+                self._feed_solutions_from_analysis(document_name, local_result)
+                return local_result
 
         classification = classify_requirement(text)
         requirements = self._extract_requirements(text)
@@ -79,6 +186,8 @@ class RAGEngine:
             classification.confidence,
             bool(self.settings.has_openai_key),
             openai_error,
+            cloud_error,
+            local_error,
         )
 
         result = AnalysisResult(
@@ -97,9 +206,28 @@ class RAGEngine:
             modo_demo=True,
             proveedor_ia="Demo local",
             error_openai=openai_error,
+            error_ollama_cloud=cloud_error,
+            error_modelo_local=local_error,
         )
         self._feed_solutions_from_analysis(document_name, result)
         return result
+
+    def _normalize_provider(self, provider: str) -> str:
+        provider = (provider or "auto").strip().lower()
+        aliases = {
+            "automático": "auto",
+            "automatico": "auto",
+            "ollama": "local",
+            "modelo local": "local",
+            "ollama cloud": "ollama_cloud",
+            "cloud": "ollama_cloud",
+            "openai api": "openai",
+            "demo local": "demo",
+            "heuristico": "demo",
+            "heurístico": "demo",
+        }
+        normalized = aliases.get(provider, provider)
+        return normalized if normalized in {"auto", "openai", "ollama_cloud", "local", "demo"} else "auto"
 
     def _feed_solutions_from_analysis(self, document_name: str, result: AnalysisResult) -> None:
         """Store what this TDR asked for as an origen='analisis' row in 'solutions'."""
@@ -170,6 +298,18 @@ class RAGEngine:
         payload = json.loads(self._extract_json(content))
         return self._analysis_from_payload(document_name, payload)
 
+    def _try_local_analysis(self, document_name: str, text: str, chunks) -> AnalysisResult | None:
+        prompt = self._build_local_prompt(document_name, text[:12000])
+        payload = self.local_llm.generate_json(prompt, json_schema=ANALYSIS_JSON_SCHEMA)
+        return self._analysis_from_payload(document_name, payload)
+
+    def _try_ollama_cloud_analysis(self, document_name: str, text: str, chunks) -> AnalysisResult | None:
+        if not self.settings.has_ollama_cloud_key:
+            raise RuntimeError("OLLAMA_API_KEY no está configurada.")
+        prompt = self._build_local_prompt(document_name, text[:12000])
+        payload = self.ollama_cloud_llm.generate_json(prompt, json_schema=ANALYSIS_JSON_SCHEMA)
+        return self._analysis_from_payload(document_name, payload)
+
     def _build_openai_prompt(self, document_name: str, text: str) -> str:
         kb_summary = "\n".join(
             f"- {solution.nombre} | {solution.categoria}: {solution.descripcion}"
@@ -200,6 +340,16 @@ Estructura JSON requerida:
   "observaciones": ""
 }}
 No inventes soluciones si la evidencia es insuficiente.
+"""
+
+    def _build_local_prompt(self, document_name: str, text: str) -> str:
+        return self._build_openai_prompt(document_name, text) + """
+
+Instrucciones adicionales para modelo local:
+- Responde únicamente un objeto JSON válido.
+- No incluyas Markdown, explicaciones fuera del JSON ni bloques de código.
+- Si una solución no está suficientemente sustentada por el texto, usa "No determinado".
+- Prioriza precisión sobre creatividad.
 """
 
     def _extract_json(self, content: str) -> str:
@@ -236,8 +386,10 @@ No inventes soluciones si la evidencia es insuficiente.
             observaciones=payload.get("observaciones", ""),
             fragmentos_recuperados=[],
             modo_demo=False,
-            proveedor_ia="OpenAI Responses API",
+            proveedor_ia="Modelo generativo",
             error_openai="",
+            error_ollama_cloud="",
+            error_modelo_local="",
         )
 
     def _extract_requirements(self, text: str) -> list[Requirement]:
@@ -365,9 +517,23 @@ No inventes soluciones si la evidencia es insuficiente.
             nivel_confianza=confidence_label,
         )
 
-    def _build_observations(self, confidence: float, has_key: bool, openai_error: str = "") -> str:
+    def _build_observations(
+        self,
+        confidence: float,
+        has_key: bool,
+        openai_error: str = "",
+        cloud_error: str = "",
+        local_error: str = "",
+    ) -> str:
+        errors = []
         if openai_error:
-            mode = f"modo demo por fallback de OpenAI ({openai_error})"
+            errors.append(f"OpenAI ({openai_error})")
+        if cloud_error:
+            errors.append(f"Ollama Cloud ({cloud_error})")
+        if local_error:
+            errors.append(f"modelo local ({local_error})")
+        if errors:
+            mode = "modo demo por fallback de " + " y ".join(errors)
         else:
             mode = "modo demo con OPENAI_API_KEY detectada" if has_key else "modo demo sin OPENAI_API_KEY"
         return (
@@ -377,7 +543,10 @@ No inventes soluciones si la evidencia es insuficiente.
         )
 
     def _safe_error_message(self, exc: Exception) -> str:
-        message = str(exc).replace(self.settings.openai_api_key, "[REDACTED]")
+        message = str(exc)
+        for secret in [self.settings.openai_api_key, self.settings.ollama_api_key]:
+            if secret:
+                message = message.replace(secret, "[REDACTED]")
         message = re.sub(r"sk-[A-Za-z0-9_-]+", "sk-[REDACTED]", message)
         message = re.sub(r"\s+", " ", message).strip()
         if len(message) > 220:

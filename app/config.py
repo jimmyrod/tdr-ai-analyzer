@@ -38,6 +38,12 @@ class Settings:
     embedding_model: str
     supabase_url: str
     supabase_secret_key: str
+    local_model_name: str
+    local_model_base_url: str
+    ollama_api_key: str
+    ollama_cloud_model: str
+    ollama_cloud_base_url: str
+    default_ai_provider: str
     chunk_size: int = 1200
     chunk_overlap: int = 180
     manual_analysis_minutes: float = 60.0
@@ -49,6 +55,10 @@ class Settings:
     @property
     def has_supabase(self) -> bool:
         return bool(self.supabase_url.strip() and self.supabase_secret_key.strip())
+
+    @property
+    def has_ollama_cloud_key(self) -> bool:
+        return bool(self.ollama_api_key.strip())
 
 
 def get_settings() -> Settings:
@@ -77,6 +87,15 @@ def get_settings() -> Settings:
         or "text-embedding-3-small",
         supabase_url=os.getenv("SUPABASE_URL", "").strip(),
         supabase_secret_key=os.getenv("SUPABASE_SECRET_KEY", "").strip(),
+        local_model_name=os.getenv("LOCAL_MODEL_NAME", "qwen2.5:7b").strip() or "qwen2.5:7b",
+        local_model_base_url=os.getenv("LOCAL_MODEL_BASE_URL", "http://localhost:11434").strip()
+        or "http://localhost:11434",
+        ollama_api_key=os.getenv("OLLAMA_API_KEY", "").strip(),
+        ollama_cloud_model=os.getenv("OLLAMA_CLOUD_MODEL", "gpt-oss:120b").strip()
+        or "gpt-oss:120b",
+        ollama_cloud_base_url=os.getenv("OLLAMA_CLOUD_BASE_URL", "https://ollama.com").strip()
+        or "https://ollama.com",
+        default_ai_provider=os.getenv("DEFAULT_AI_PROVIDER", "auto").strip().lower() or "auto",
     )
 
 

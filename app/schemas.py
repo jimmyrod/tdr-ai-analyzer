@@ -97,6 +97,8 @@ class AnalysisResult:
     modo_demo: bool = True
     proveedor_ia: str = "Demo local"
     error_openai: str = ""
+    error_ollama_cloud: str = ""
+    error_modelo_local: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)

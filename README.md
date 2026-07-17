@@ -19,6 +19,7 @@ tdr-ai-analyzer/
 │   ├── vector_store.py      # Fragmentos de TDR en Supabase (pgvector), con fallback JSON local
 │   ├── knowledge_base.py    # Catálogo de soluciones en Supabase, con fallback a solutions.json
 │   ├── rag_engine.py        # Orquestación RAG, análisis estructurado y alimentación del catálogo
+│   ├── local_llm.py         # Cliente Ollama para modelo generativo local estructurado
 │   ├── classifier.py        # Clasificación tecnológica heurística
 │   ├── recommender.py       # Recomendación por búsqueda vectorial o por coincidencia de palabras clave
 │   ├── evaluator.py         # Métricas de validación experta
@@ -93,10 +94,59 @@ EMBEDDING_MODEL=text-embedding-3-small
 VECTOR_STORE_PATH=data/processed/chroma
 SUPABASE_URL=
 SUPABASE_SECRET_KEY=
+DEFAULT_AI_PROVIDER=auto
+LOCAL_MODEL_NAME=qwen2.5:7b
+LOCAL_MODEL_BASE_URL=http://localhost:11434
+OLLAMA_API_KEY=
+OLLAMA_CLOUD_MODEL=gpt-oss:120b
+OLLAMA_CLOUD_BASE_URL=https://ollama.com
 ```
 
-- Si `OPENAI_API_KEY` está vacío (o la key falla), el sistema funciona en modo demo con embeddings hash locales y análisis heurístico estructurado, marcando `proveedor_ia: "Demo local"` en el resultado.
+- `DEFAULT_AI_PROVIDER` acepta `auto`, `openai`, `ollama_cloud`, `local` o `demo`.
+- En `auto`, el sistema intenta OpenAI primero, luego Ollama Cloud, luego Ollama local y finalmente demo heurístico si los proveedores anteriores fallan.
+- Si se desactiva `Usar OPENAI_API_KEY` en la barra lateral, la aplicación puede forzar `Modelo local real (Ollama)` aunque exista una API key en `.env`.
+- Si `OLLAMA_API_KEY` está configurada, se puede usar Ollama Cloud sin GPU local.
+- Si no hay OpenAI, Ollama Cloud ni Ollama local disponible, el sistema funciona en modo demo con embeddings hash locales y análisis heurístico estructurado, marcando `proveedor_ia: "Demo local"` en el resultado.
 - Si `SUPABASE_URL` o `SUPABASE_SECRET_KEY` están vacíos, o Supabase no responde, todo lo relacionado a Supabase cae automáticamente a un almacenamiento local (JSON o `solutions.json`) sin interrumpir el análisis.
+
+## Ollama Cloud
+
+Ollama Cloud permite ejecutar modelos remotos desde la API de `https://ollama.com/api`, usando una API key. Es el modo recomendado cuando el equipo local no tiene GPU suficiente para ejecutar modelos como `qwen2.5:7b` con tiempos razonables.
+
+Pasos:
+
+1. Crear una API key en Ollama.
+2. Agregarla a `.env`:
+
+```text
+OLLAMA_API_KEY=tu_api_key_de_ollama
+OLLAMA_CLOUD_MODEL=gpt-oss:120b
+OLLAMA_CLOUD_BASE_URL=https://ollama.com
+```
+
+3. Reiniciar Streamlit.
+4. En la barra lateral seleccionar **Ollama Cloud**.
+
+Este modo no requiere que Ollama esté instalado ni ejecutándose localmente. La aplicación envía el análisis a la API remota de Ollama con el encabezado `Authorization: Bearer OLLAMA_API_KEY`.
+
+## Modelo generativo local con Ollama
+
+El prototipo incluye un modelo generativo local real mediante [Ollama](https://ollama.com/). El modelo recomendado por defecto es `qwen2.5:7b`, porque ofrece buen desempeño multilingüe para español, soporta generación estructurada en JSON y puede ejecutarse localmente en equipos de gama media. Para equipos con más memoria se puede cambiar `LOCAL_MODEL_NAME` por un modelo mayor.
+
+Instalar y preparar el modelo:
+
+```bash
+ollama pull qwen2.5:7b
+ollama list
+```
+
+Luego iniciar la aplicación y, en la barra lateral:
+
+1. Desactivar **Usar OPENAI_API_KEY**.
+2. Seleccionar **Modelo local real (Ollama)**.
+3. Ejecutar el análisis del TDR.
+
+Si Ollama no está instalado, no está ejecutándose o el modelo no fue descargado, la app muestra un error claro y cae a modo demo para que el prototipo siga funcionando. El modelo local no consume créditos de OpenAI ni envía el documento a servicios externos.
 
 ## Supabase
 
@@ -160,11 +210,12 @@ streamlit run app/main.py
 1. Abrir la app en Streamlit.
 2. Cargar un documento PDF, DOCX o TXT.
 3. Revisar el texto extraído.
-4. Ejecutar el análisis automático.
-5. Revisar resumen, objeto, requisitos, clasificación y recomendación.
-6. Exportar el resultado en Markdown, JSON o PDF.
-7. Registrar la validación experta para calcular métricas.
-8. En la pestaña **Base de conocimiento** se puede ver el catálogo completo (fuente Supabase o `solutions.json` local, según configuración), con una tabla resumen y el detalle de cada solución.
+4. Elegir el motor de análisis en la barra lateral: automático, OpenAI, Ollama Cloud, modelo local Ollama o demo.
+5. Ejecutar el análisis automático.
+6. Revisar resumen, objeto, requisitos, clasificación y recomendación.
+7. Exportar el resultado en Markdown, JSON o PDF.
+8. Registrar la validación experta para calcular métricas.
+9. En la pestaña **Base de conocimiento** se puede ver el catálogo completo (fuente Supabase o `solutions.json` local, según configuración), con una tabla resumen y el detalle de cada solución.
 
 ## Base de conocimiento
 
@@ -214,6 +265,9 @@ El módulo de evaluación calcula:
 - La recomendación es preliminar y requiere revisión técnica especializada.
 - No realiza evaluación legal, contractual ni financiera.
 - El modo demo usa heurísticas y no reemplaza un modelo generativo real.
+- Ollama Cloud requiere una API key y conexión a internet.
+- El modelo local con Ollama depende de los recursos del computador y puede ser más lento que OpenAI.
+- Para mayor confiabilidad, revisar siempre los fragmentos recuperados, la justificación técnica y los datos faltantes.
 - La calidad del análisis depende de la claridad del TDR y de la base de conocimiento.
 - La base vectorial usa Supabase/pgvector; sin configurarlo, cae a almacenamiento local simple (JSON).
 - La búsqueda vectorial de soluciones solo corre en el modo heurístico (ver sección Supabase); con OpenAI activo, la recomendación la decide el modelo directamente.

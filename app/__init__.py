@@ -9,6 +9,7 @@ __all__ = [
     "evaluator",
     "exporter",
     "knowledge_base",
+    "local_llm",
     "rag_engine",
     "recommender",
     "schemas",
